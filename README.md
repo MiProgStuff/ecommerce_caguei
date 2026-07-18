@@ -156,6 +156,72 @@ pnpm --filter api start
 pnpm --filter store start
 ```
 
+## 🐳 Docker Deployment
+
+The monorepo contains optimized Dockerfiles for each application:
+* Storefront: `apps/store/Dockerfile`
+* Admin Panel: `apps/admin/Dockerfile`
+* API Backend: `apps/api/Dockerfile`
+
+These Dockerfiles leverage **Turborepo multi-stage builds** (`turbo prune`) to minimize final image sizes and only compile the required workspace packages.
+
+### How to Build & Run with Docker
+
+Run these commands from the **root directory** of the repository:
+
+#### 1. Build the API Server
+```bash
+docker build -t caguei-api -f apps/api/Dockerfile .
+```
+Run the container:
+```bash
+docker run -p 4000:4000 --env-file apps/api/.env caguei-api
+```
+
+#### 2. Build the Storefront
+```bash
+docker build -t caguei-store -f apps/store/Dockerfile .
+```
+Run the container:
+```bash
+docker run -p 3000:3000 --env-file apps/store/.env caguei-store
+```
+
+#### 3. Build the Admin Panel
+```bash
+docker build -t caguei-admin -f apps/admin/Dockerfile .
+```
+Run the container:
+```bash
+docker run -p 3001:3001 --env-file apps/admin/.env caguei-admin
+```
+
+### Running with Docker Compose
+
+A root `docker-compose.yml` configures a PostgreSQL database container along with the API, storefront, and admin panel, running them in a unified container network.
+
+1. **Spin up all services:**
+   ```bash
+   docker compose up --build -d
+   ```
+2. **Setup the database and seed catalog data inside the container:**
+   ```bash
+   # Push database schema
+   docker compose exec api pnpm --filter @caguei/db exec prisma db push
+
+   # Seed database catalog products
+   docker compose exec api npx tsx packages/db/prisma/seed.ts
+   ```
+
+* **Storefront:** `http://localhost:3000`
+* **Admin Dashboard:** `http://localhost:3001`
+* **API Backend:** `http://localhost:4000`
+
+To shut down and wipe database volumes:
+```bash
+docker compose down -v
+```
+
 ---
 
 ## 📖 Additional Reference Docs

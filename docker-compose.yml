@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: caguei-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: caguei_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: caguei-api
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/caguei_db
+      BETTER_AUTH_SECRET: caguei_auth_secret_placeholder_keys_for_development_123456
+      BETTER_AUTH_URL: http://localhost:4000
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
+
+  store:
+    build:
+      context: .
+      dockerfile: apps/store/Dockerfile
+    container_name: caguei-store
+    restart: always
+    depends_on:
+      - db
+      - api
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/caguei_db
+      BETTER_AUTH_SECRET: caguei_auth_secret_placeholder_keys_for_development_123456
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-pk_test_placeholder}
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    container_name: caguei-admin
+    restart: always
+    depends_on:
+      - db
+      - api
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/caguei_db
+      BETTER_AUTH_SECRET: caguei_auth_secret_placeholder_keys_for_development_123456
+      BETTER_AUTH_URL: http://localhost:3001
+      NEXT_PUBLIC_BASE_URL: http://localhost:3001
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+
+volumes:
+  pgdata:
