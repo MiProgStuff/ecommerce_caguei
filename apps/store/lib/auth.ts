@@ -7,6 +7,18 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  user: {
+    additionalFields: {
+      phoneNumber: {
+        type: 'string',
+        required: false,
+      },
+      address: {
+        type: 'string',
+        required: false,
+      },
+    },
+  },
   plugins: [
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {

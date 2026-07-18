@@ -45,6 +45,23 @@ To create/migrate the database tables inside your PostgreSQL database instance:
 pnpm --filter @caguei/db exec prisma db push
 ```
 
+### 4. Populate Database Catalog
+After setting up or resetting the database, seed it with the official product catalog:
+```bash
+cd packages/db && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/caguei_db" npx tsx prisma/seed.ts
+```
+
+### 5. Setup Stripe Local Tunnel
+To test checkout and receive order payments successfully, you must run the Stripe CLI forwarder:
+```bash
+stripe listen --forward-to localhost:4000/api/webhooks/stripe
+```
+Copy the webhook secret (`whsec_...`) printed by the command and add it to `apps/api/.env` as:
+```env
+STRIPE_WEBHOOK_SECRET="whsec_..."
+```
+Then restart the API server.
+
 ---
 
 ## Development Workflow

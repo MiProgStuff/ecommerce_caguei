@@ -5,5 +5,15 @@ export const authClient = createAuthClient({
   plugins: [
     emailOTPClient(),
   ],
+  user: {
+    additionalFields: {
+      phoneNumber: {
+        type: 'string',
+      },
+      address: {
+        type: 'string',
+      },
+    },
+  },
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
 });

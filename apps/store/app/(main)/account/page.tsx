@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Button from '../../../components/shared/button';
 import Input from '../../../components/shared/input';
-import { useSession, signOutUser, fetchUserAddresses, createUserAddress, deleteUserAddress, Address } from '../../../lib/api';
+import { useSession, signOutUser, fetchUserAddresses, createUserAddress, deleteUserAddress, Address, updateUserProfile } from '../../../lib/api';
 
 export default function AccountPage() {
   const pathname = usePathname();
@@ -15,7 +15,7 @@ export default function AccountPage() {
   const [profile, setProfile] = useState({
     name: '',
     email: '',
-    phone: '+1 (555) 019-2834',
+    phone: '',
   });
 
   const [isEditing, setEditing] = useState(false);
@@ -35,6 +35,7 @@ export default function AccountPage() {
         ...prev,
         name: sessionData.user.name || '',
         email: sessionData.user.email || '',
+        phone: (sessionData.user as any).phoneNumber || '',
       }));
       // Fetch saved addresses
       loadAddresses();
@@ -53,9 +54,21 @@ export default function AccountPage() {
     router.push('/login');
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setEditing(false);
+    try {
+      const response = await updateUserProfile({
+        name: profile.name,
+        phoneNumber: profile.phone,
+      });
+      if (response?.error) {
+        alert(response.error.message || 'Failed to update details');
+      } else {
+        setEditing(false);
+      }
+    } catch (err: any) {
+      alert(err.message || 'An error occurred');
+    }
   };
 
   const handleAddAddress = async (e: React.FormEvent) => {

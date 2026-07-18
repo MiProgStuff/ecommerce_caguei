@@ -435,6 +435,38 @@ app.post('/api/payments/create-intent', async (req, res) => {
   }
 });
 
+// ─── Products ─────────────────────────────────────────────────────────────────
+app.get('/api/products', async (req, res) => {
+  try {
+    const { category } = req.query;
+    const where = category ? { category: String(category) } : {};
+    const products = await prisma.product.findMany({
+      where,
+      orderBy: { id: 'asc' },
+    });
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/products/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const product = await prisma.product.findUnique({
+      where: { slug },
+    });
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    res.json(product);
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ─── Orders (read-only) ───────────────────────────────────────────────────────
 app.get('/api/orders', async (req, res) => {
   try {

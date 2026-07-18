@@ -1,12 +1,18 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { PRODUCTS } from '../../../lib/products';
+import prisma from '../../../lib/prisma';
 import ProductCard from '../../../components/product/product-card';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
+
+const serializeProduct = (p: any) => ({
+  ...p,
+  createdAt: p.createdAt.toISOString(),
+  updatedAt: p.updatedAt.toISOString(),
+});
 
 const COLLECTIONS_META: { [key: string]: { name: string; desc: string; banner: string } } = {
   'core-collection': {
@@ -39,25 +45,22 @@ export default async function CollectionDetailPage(props: PageProps) {
     notFound();
   }
 
-  // Filter products based on slugs to make realistic collections
-  let matchedProducts = PRODUCTS;
+  let productIds: string[] = [];
   if (params.slug === 'core-collection') {
-    matchedProducts = PRODUCTS.filter((p) =>
-      ['sculptural-blazer-01', 'pleated-trousers', 'system-tote', 'large-architecture-tote'].includes(p.id)
-    );
+    productIds = ['sculptural-blazer-01', 'pleated-trousers', 'system-tote', 'large-architecture-tote'];
   } else if (params.slug === 'lookbook-chapter-01') {
-    matchedProducts = PRODUCTS.filter((p) =>
-      ['heavy-gauge-knit', 'pleated-wide-trouser', 'sculpted-wool-overcoat'].includes(p.id)
-    );
+    productIds = ['heavy-gauge-knit', 'pleated-wide-trouser', 'sculpted-wool-overcoat'];
   } else if (params.slug === 'essentials') {
-    matchedProducts = PRODUCTS.filter((p) =>
-      ['heavy-cotton-tee', 'structural-parka-01', 'heritage-trousers'].includes(p.id)
-    );
+    productIds = ['heavy-cotton-tee', 'structural-parka-01', 'heritage-trousers'];
   } else if (params.slug === 'archive') {
-    matchedProducts = PRODUCTS.filter((p) =>
-      ['archive-overcoat', 'raw-denim-chore', 'pleated-trouser-04', 'technical-utility-vest'].includes(p.id)
-    );
+    productIds = ['archive-overcoat', 'raw-denim-chore', 'pleated-trouser-04', 'technical-utility-vest'];
   }
+
+  const matchedProducts = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+  });
+
+  const serializedProducts = matchedProducts.map(serializeProduct);
 
   return (
     <main className="pt-20 pb-section-gap">
@@ -82,15 +85,15 @@ export default async function CollectionDetailPage(props: PageProps) {
       <section className="max-w-[1440px] mx-auto px-6 md:px-margin-desktop mt-20">
         <div className="flex justify-between items-baseline mb-12 border-b border-outline-variant/30 pb-4 select-none">
           <span className="font-label-caps text-label-caps text-on-surface-variant">
-            {matchedProducts.length} PRODUCTS
+            {serializedProducts.length} PRODUCTS
           </span>
           <Link href="/collections" className="font-label-caps text-label-caps hover:text-primary transition-colors underline">
-            BACK TO COLLECTIONS
+             BACK TO COLLECTIONS
           </Link>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-gutter gap-y-unit-xl">
-          {matchedProducts.map((product) => (
+          {serializedProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -98,6 +101,7 @@ export default async function CollectionDetailPage(props: PageProps) {
     </main>
   );
 }
+
 
 export async function generateStaticParams() {
   return [

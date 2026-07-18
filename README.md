@@ -1,159 +1,166 @@
-# Turborepo starter
+# Caguei Luxury Streetwear — Monorepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+An architectural, minimalist, luxury streetwear e-commerce platform built as a high-performance monorepo using **pnpm workspaces** and **Turborepo**.
 
-## Using this example
+---
 
-Run the following command:
+## Workspace Layout
 
-```sh
-npx create-turbo@latest
+```text
+caguei-ecommerce/
+  apps/
+    store/      # Next.js 16 Storefront (Customer-facing, Stripe Elements)
+    admin/      # Next.js 16 Admin Panel (Internal product/order tracking)
+    api/        # Express.js Central Backend (Auth, addresses, Stripe webhook, cart & orders)
+  packages/
+    db/         # Shared database ORM package (Prisma 7 client + PostgreSQL)
+  docs/         # System documentation
 ```
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+## 🛠️ Local Development Setup
 
-### Apps and Packages
+Follow these steps to run the Caguei ecosystem on your development machine.
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+### Prerequisites
+* **Node.js** >= 18
+* **pnpm** (Package manager)
+* **PostgreSQL** running locally
+* **Stripe CLI** (for local webhook testing)
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+---
 
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+### Step 1: Install Dependencies
+Bootstrap the monorepo from the root directory:
+```bash
+pnpm install
 ```
 
-Without global `turbo`, use your package manager:
+### Step 2: Configure Environment Files
+Set up `.env` files in each workspace folder. You can copy the defaults configured for local development:
 
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+#### `apps/api/.env`
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/caguei_db"
+BETTER_AUTH_SECRET="caguei_auth_secret_placeholder_keys_for_development_123456"
+BETTER_AUTH_URL="http://localhost:4000"
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
+#### `apps/store/.env`
+```env
+PORT=3000
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/caguei_db"
+BETTER_AUTH_SECRET="caguei_auth_secret_placeholder_keys_for_development_123456"
+BETTER_AUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
 ```
 
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+#### `packages/db/.env`
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/caguei_db"
 ```
 
-### Develop
+---
 
-To develop all apps and packages, run the following command:
+### Step 3: Database setup & Seeding
+Inside the `packages/db` package, push the schema to PostgreSQL and populate the product catalog:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+1. **Push schema to DB:**
+   ```bash
+   pnpm --filter @caguei/db exec prisma db push
+   ```
+2. **Seed product data:**
+   ```bash
+   cd packages/db && DATABASE_URL="postgresql://postgres:postgres@localhost:5432/caguei_db" npx tsx prisma/seed.ts
+   ```
 
-```sh
-cd my-turborepo
-turbo dev
+---
+
+### Step 4: Setup Stripe Webhook Tunnel
+Stripe needs a way to forward payment notifications (`payment_intent.succeeded`) to your local backend.
+
+1. **Start the forwarder tunnel:**
+   ```bash
+   stripe listen --forward-to localhost:4000/api/webhooks/stripe
+   ```
+2. Copy the webhook secret (`whsec_...`) printed in the console and paste it into `apps/api/.env` as `STRIPE_WEBHOOK_SECRET`.
+3. Restart/Start the servers.
+
+---
+
+### Step 5: Start Development Servers
+Run the dev server from the root directory to start all applications simultaneously:
+```bash
+pnpm dev
+```
+* **Storefront:** `http://localhost:3000`
+* **Admin Dashboard:** `http://localhost:3001`
+* **Central API & Auth:** `http://localhost:4000`
+
+---
+
+## 🚀 Production Build & Deployment
+
+To deploy this monorepo to production (e.g. AWS, Vercel, Docker, Dokploy), configure variables and build options for production environments:
+
+### 1. Database Provisioning
+Run migrations to set up the database tables in your production PostgreSQL instance:
+```bash
+# Push production schema
+DATABASE_URL="your-production-db-url" pnpm --filter @caguei/db exec prisma db push
 ```
 
-Without global `turbo`, use your package manager:
+### 2. Stripe Production Webhook
+1. Go to the **Stripe Dashboard → Developers → Webhooks**.
+2. Click **Add endpoint** and enter your production server webhook address:
+   `https://api.yourdomain.com/api/webhooks/stripe`
+3. Select the event: `payment_intent.succeeded`.
+4. Copy the production **Signing Secret** (`whsec_...`) and configure it on your production API server as `STRIPE_WEBHOOK_SECRET`.
 
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
+### 3. Production Environment Checklist
+Set up these environment variables in your hosting provider's dashboard:
+
+| App | Key | Production Value |
+|-----|-----|------------------|
+| **api** | `DATABASE_URL` | Production PostgreSQL connection URL |
+| **api** | `STRIPE_SECRET_KEY` | Live secret key (`sk_live_...`) |
+| **api** | `STRIPE_WEBHOOK_SECRET` | Live webhook secret (`whsec_...`) |
+| **api** | `BETTER_AUTH_SECRET` | Secure random string (e.g. `openssl rand -hex 32`) |
+| **api** | `BETTER_AUTH_URL` | API base domain (e.g. `https://api.yourdomain.com`) |
+| **store** | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Live publishable key (`pk_live_...`) |
+| **store** | `NEXT_PUBLIC_API_URL` | API base domain (e.g. `https://api.yourdomain.com`) |
+
+---
+
+### 4. Build the Applications
+Run compile check and build from the root directory:
+```bash
+# Check TS compilation
+pnpm check-types
+
+# Build optimized production assets
+pnpm build
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### 5. Running in Production
+Start each service using Node:
+```bash
+# API Server
+pnpm --filter api start
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
+# Storefront
+pnpm --filter store start
 ```
 
-Without global `turbo`:
+---
 
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+## 📖 Additional Reference Docs
 
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+For deep technical details, check the `./docs` directory:
+* **[Architecture Guide](file:///home/soumya/Desktop/Code/Projects/caguei-ecommerce/docs/architecture.md):** High-level component patterns and secure Stripe payment data flows.
+* **[API Reference](file:///home/soumya/Desktop/Code/Projects/caguei-ecommerce/docs/api-reference.md):** Complete catalog of Express API endpoints, cart sync operations, and webhook behaviors.
+* **[Design System](file:///home/soumya/Desktop/Code/Projects/caguei-ecommerce/docs/design-system.md):** Typography, color codes, spacing, and strict `0px` border-radius constraints.

@@ -312,3 +312,37 @@ export async function fetchOrders(): Promise<any[]> {
     return [];
   }
 }
+
+// Products — Query endpoints from the database catalog
+export async function fetchProducts(category?: string): Promise<any[]> {
+  try {
+    const url = category
+      ? `${API_BASE_URL}/api/products?category=${encodeURIComponent(category)}`
+      : `${API_BASE_URL}/api/products`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+}
+
+export async function fetchProductBySlug(slug: string): Promise<any | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/products/${slug}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching product by slug:', error);
+    return null;
+  }
+}
+
+// User Profile Details Updates
+export async function updateUserProfile(data: { name?: string; phoneNumber?: string }) {
+  return await (authClient.updateUser as any)({
+    name: data.name,
+    phoneNumber: data.phoneNumber,
+  });
+}

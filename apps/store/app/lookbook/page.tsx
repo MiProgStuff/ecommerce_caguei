@@ -5,17 +5,24 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import Button from '../../components/shared/button';
-import { PRODUCTS, Product } from '../../lib/products';
+import { fetchProducts } from '../../lib/api';
+import { Product } from '../../lib/products';
 import ProductCard from '../../components/product/product-card';
 
 export default function LookbookPage() {
   const lineRef = useRef(null);
   const isLineInView = useInView(lineRef, { once: true, margin: '-100px' });
 
-  // Filter specific featured items for lookbook carousel
-  const lookbookProducts = PRODUCTS.filter((p: Product) =>
-    ['archive-overcoat', 'pleated-trousers', 'system-tote'].includes(p.id)
-  );
+  const [lookbookProducts, setLookbookProducts] = React.useState<Product[]>([]);
+
+  React.useEffect(() => {
+    fetchProducts().then((products) => {
+      const filtered = products.filter((p: Product) =>
+        ['archive-overcoat', 'pleated-trousers', 'system-tote'].includes(p.id)
+      );
+      setLookbookProducts(filtered);
+    });
+  }, []);
 
   const carouselRef = useRef<HTMLDivElement>(null);
 

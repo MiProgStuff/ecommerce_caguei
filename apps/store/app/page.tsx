@@ -6,11 +6,17 @@ import { ArrowDown, Play } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Button from '../components/shared/button';
 import ProductCard from '../components/product/product-card';
-import { PRODUCTS } from '../lib/products';
+import { fetchProducts } from '../lib/api';
+import { Product } from '../lib/products';
 
 export default function Home() {
-  // Select first three products as "New Arrivals"
-  const newArrivals = PRODUCTS.slice(0, 3);
+  const [newArrivals, setNewArrivals] = React.useState<Product[]>([]);
+
+  React.useEffect(() => {
+    fetchProducts().then((data) => {
+      setNewArrivals(data.slice(0, 3));
+    });
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },

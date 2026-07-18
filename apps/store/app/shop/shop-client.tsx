@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronDown, SlidersHorizontal, X } from 'lucide-react';
-import { PRODUCTS, Product } from '../../lib/products';
+import { fetchProducts } from '../../lib/api';
+import { Product } from '../../lib/products';
 import ProductCard from '../../components/product/product-card';
 
 interface ShopClientProps {
@@ -17,6 +18,8 @@ interface ShopClientProps {
 type SortOption = 'newest' | 'price-asc' | 'price-desc';
 
 export default function ShopClient({ initialFilters }: ShopClientProps) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>(
     initialFilters.category || 'All'
   );
@@ -26,6 +29,13 @@ export default function ShopClient({ initialFilters }: ShopClientProps) {
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [isSortOpen, setSortOpen] = useState(false);
   const [isMobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  useEffect(() => {
+    fetchProducts().then((data) => {
+      setProducts(data);
+      setLoading(false);
+    });
+  }, []);
 
   const categories = ['All', 'Outerwear', 'Knitwear', 'Trousers', 'Accessories'];
   const sizes = ['XS', 'S', 'M', 'L', 'XL'];
@@ -38,7 +48,7 @@ export default function ShopClient({ initialFilters }: ShopClientProps) {
 
   // Filter & Sort Logic
   const filteredProducts = useMemo(() => {
-    let result = [...PRODUCTS];
+    let result = [...products];
 
     // Filter by Category
     if (selectedCategory && selectedCategory !== 'All') {
@@ -83,7 +93,7 @@ export default function ShopClient({ initialFilters }: ShopClientProps) {
     }
 
     return result;
-  }, [selectedCategory, selectedSize, selectedColor, maxPrice, sortBy, initialFilters]);
+  }, [products, selectedCategory, selectedSize, selectedColor, maxPrice, sortBy, initialFilters]);
 
   const activeSortLabel = {
     newest: 'NEWEST',
@@ -98,6 +108,16 @@ export default function ShopClient({ initialFilters }: ShopClientProps) {
     setMaxPrice(2000);
     setSortBy('newest');
   };
+
+  if (loading) {
+    return (
+      <main className="pt-32 pb-section-gap max-w-[1440px] mx-auto px-6 md:px-margin-desktop text-center select-none">
+        <h1 className="font-label-caps text-label-caps text-on-surface-variant animate-pulse">
+          LOADING CATALOGUE...
+        </h1>
+      </main>
+    );
+  }
 
   return (
     <main className="pt-32 pb-section-gap max-w-[1440px] mx-auto px-6 md:px-margin-desktop">
