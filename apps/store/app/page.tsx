@@ -66,7 +66,7 @@ export default function Home() {
               <Button variant="primary">SHOP COLLECTION</Button>
             </Link>
             <Link href="/lookbook" passHref>
-              <Button variant="outline">EXPLORE LOOKBOOK</Button>
+              <Button className='bg-white' variant="secondary">EXPLORE LOOKBOOK</Button>
             </Link>
           </motion.div>
         </div>

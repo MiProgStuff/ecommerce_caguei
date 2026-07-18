@@ -62,7 +62,7 @@ export default function Header() {
   return (
     <>
       {/* Top Navigation */}
-      <header className="fixed top-0 w-full z-40 bg-background/95 backdrop-blur-md border-b border-outline-variant/30 select-none">
+      <header className="sticky top-0 w-full z-40 bg-background/95 backdrop-blur-md border-b border-outline-variant/30 select-none">
         <div className="flex justify-between items-center h-20 px-6 md:px-margin-desktop max-w-[1440px] mx-auto">
           
           {/* Left: Desktop Links */}

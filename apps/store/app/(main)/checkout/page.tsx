@@ -33,11 +33,13 @@ const stripePromise = loadStripe(
 function StripePaymentForm({
   grandTotal,
   currency,
+  orderId,
   onSuccess,
   onError,
 }: {
   grandTotal: number;
   currency: string;
+  orderId: string;
   onSuccess: () => void;
   onError: (msg: string) => void;
 }) {
@@ -55,7 +57,7 @@ function StripePaymentForm({
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/order-success`,
+        return_url: `${window.location.origin}/order-success/${orderId}`,
       },
     });
 
@@ -133,6 +135,7 @@ export default function CheckoutPage() {
     label: 'home',
   });
   const [addingAddress, setAddingAddress] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
   // Guest address form
   const [guestAddress, setGuestAddress] = useState({
     street: '',
@@ -350,8 +353,9 @@ export default function CheckoutPage() {
         items: orderItems,
       });
 
-      if (!result?.clientSecret) throw new Error('Failed to initialise payment.');
+      if (!result?.clientSecret || !result?.orderId) throw new Error('Failed to initialise payment.');
       setClientSecret(result.clientSecret);
+      setOrderId(result.orderId);
       setCheckoutStep('payment');
     } catch (err: any) {
       setPaymentError(err.message || 'Failed to initialise payment. Please try again.');
@@ -363,7 +367,11 @@ export default function CheckoutPage() {
   // Called after Stripe redirects back (handled in order-success page)
   const handlePaymentSuccess = () => {
     clearCart();
-    router.push('/order-success');
+    if (orderId) {
+      router.push(`/order-success/${orderId}`);
+    } else {
+      router.push('/shop');
+    }
   };
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -703,6 +711,7 @@ export default function CheckoutPage() {
                 <StripePaymentForm
                   grandTotal={grandTotal}
                   currency={currency}
+                  orderId={orderId || ''}
                   onSuccess={handlePaymentSuccess}
                   onError={setPaymentError}
                 />

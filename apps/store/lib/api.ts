@@ -280,7 +280,7 @@ export async function createPaymentIntent(data: {
     size: string;
     price: number;
   }>;
-}): Promise<{ clientSecret: string } | null> {
+}): Promise<{ clientSecret: string; orderId: string } | null> {
   try {
     const res = await fetch(`${API_BASE_URL}/api/payments/create-intent`, {
       method: 'POST',

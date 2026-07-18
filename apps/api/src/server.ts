@@ -428,7 +428,10 @@ app.post('/api/payments/create-intent', async (req, res) => {
       },
     });
 
-    res.json({ clientSecret: paymentIntent.client_secret });
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      orderId: pendingOrder.id,
+    });
   } catch (error: any) {
     console.error('Error creating payment intent:', error);
     res.status(500).json({ error: error.message || 'Internal server error' });
