@@ -2,22 +2,26 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, KeyRound } from 'lucide-react';
+import { KeyRound } from 'lucide-react';
 import Input from '../../../components/shared/input';
 import Button from '../../../components/shared/button';
-import { authClient } from '../../../lib/auth-client';
+import { checkUserExists, sendVerificationOtp, signInWithOtp, createUserAddress } from '../../../lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
-  const [name, setName] = useState(''); // Optional, used for automatic signup
-  const [stage, setStage] = useState<'email' | 'otp'>('email');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [street, setStreet] = useState('');
+  const [city, setCity] = useState('');
+  const [country, setCountry] = useState('United States');
+  const [stage, setStage] = useState<'email' | 'register' | 'otp'>('email');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
@@ -26,19 +30,48 @@ export default function LoginPage() {
     setMessage('');
 
     try {
-      const response = await authClient.emailOtp.sendVerificationOtp({
-        email,
-        type: 'sign-in',
-      });
-
-      if (response.error) {
-        setError(response.error.message || 'Failed to send verification code. Please try again.');
+      const exists = await checkUserExists(email);
+      if (exists) {
+        // User exists, send OTP directly
+        const response = await sendVerificationOtp(email, 'sign-in');
+        if (response.error) {
+          setError(response.error.message || 'Failed to send verification code.');
+        } else {
+          setMessage(`Verification code has been sent to ${email}.`);
+          setStage('otp');
+        }
       } else {
-        setMessage(`Verification code has been sent to ${email}.`);
+        // User does not exist, go to register stage
+        setStage('register');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'An error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !phone || !street || !city || !country) {
+      setError('Please fill in all fields to register.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const response = await sendVerificationOtp(email, 'sign-in');
+      if (response.error) {
+        setError(response.error.message || 'Failed to send verification code.');
+      } else {
+        setMessage(`Verification code has been sent to ${email}. Please verify to register.`);
         setStage('otp');
       }
     } catch (err: any) {
-      setError(err?.message || 'An unexpected error occurred.');
+      setError(err?.message || 'An error occurred.');
     } finally {
       setLoading(false);
     }
@@ -52,15 +85,26 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await authClient.signIn.emailOtp({
+      const response = await signInWithOtp(
         email,
         otp,
-        name: name || undefined,
-      });
+        name || undefined,
+        phone || undefined,
+        street || undefined
+      );
 
       if (response.error) {
         setError(response.error.message || 'Invalid verification code. Please try again.');
       } else {
+        // If registration details were provided, save their first Address record!
+        if (name && phone && street && city) {
+          await createUserAddress({
+            street,
+            city,
+            country,
+            label: 'home',
+          });
+        }
         router.push('/account');
       }
     } catch (err: any) {
@@ -97,8 +141,8 @@ export default function LoginPage() {
           </div>
         )}
 
-        {stage === 'email' ? (
-          <form onSubmit={handleSendOtp} className="space-y-6">
+        {stage === 'email' && (
+          <form onSubmit={handleEmailSubmit} className="space-y-6">
             <Input
               label="Email Address"
               id="email"
@@ -109,37 +153,112 @@ export default function LoginPage() {
               required
               disabled={loading}
             />
-            
             <div className="pt-4">
               <Button variant="primary" fullWidth type="submit" disabled={loading}>
-                {loading ? 'SENDING CODE...' : 'REQUEST LOGIN CODE'}
+                {loading ? 'CHECKING...' : 'CONTINUE'}
               </Button>
             </div>
           </form>
-        ) : (
-          <form onSubmit={handleVerifyOtp} className="space-y-6">
+        )}
+
+        {stage === 'register' && (
+          <form onSubmit={handleRegisterSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="font-label-caps text-xs text-on-surface-variant uppercase tracking-wider">
+                Create an Atelier Account
+              </h2>
+              <p className="text-[11px] text-on-surface-variant/80">
+                Email <strong>{email}</strong> is not registered. Please provide your profile details to sign up.
+              </p>
+            </div>
+
             <div className="space-y-4">
               <Input
-                label="Verification Code"
-                id="otp"
+                label="Full Name"
+                id="name"
                 type="text"
-                placeholder="6-digit code"
-                maxLength={6}
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
                 disabled={loading}
               />
               <Input
-                label="Full Name (New accounts only)"
-                id="name"
-                type="text"
-                placeholder="Optional"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                label="Phone Number"
+                id="phone"
+                type="tel"
+                placeholder="+1 (555) 000-0000"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
                 disabled={loading}
               />
+              <Input
+                label="Street Address"
+                id="street"
+                type="text"
+                placeholder="123 Atelier Street"
+                value={street}
+                onChange={(e) => setStreet(e.target.value)}
+                required
+                disabled={loading}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="City"
+                  id="city"
+                  type="text"
+                  placeholder="Kyoto"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+                <Input
+                  label="Country"
+                  id="country"
+                  type="text"
+                  placeholder="Japan"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
             </div>
+
+            <div className="flex justify-between items-center text-xs pt-2">
+              <button
+                type="button"
+                onClick={() => setStage('email')}
+                className="font-label-caps text-[10px] text-primary underline cursor-pointer hover:opacity-70"
+                disabled={loading}
+              >
+                Back
+              </button>
+            </div>
+
+            <div className="pt-2">
+              <Button variant="primary" fullWidth type="submit" disabled={loading}>
+                {loading ? 'SENDING CODE...' : 'SEND OTP & REGISTER'}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {stage === 'otp' && (
+          <form onSubmit={handleVerifyOtp} className="space-y-6">
+            <Input
+              label="Verification Code"
+              id="otp"
+              type="text"
+              placeholder="6-digit code"
+              maxLength={6}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              required
+              disabled={loading}
+            />
 
             <div className="flex justify-between items-center text-xs">
               <span className="text-on-surface-variant">Code expires in 5 minutes</span>

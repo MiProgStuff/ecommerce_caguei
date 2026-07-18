@@ -5,24 +5,29 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Button from '../../../components/shared/button';
 import Input from '../../../components/shared/input';
-import { authClient } from '../../../lib/auth-client';
+import { useSession, signOutUser, fetchUserAddresses, createUserAddress, deleteUserAddress, Address } from '../../../lib/api';
 
 export default function AccountPage() {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: sessionData, isPending } = authClient.useSession();
+  const { data: sessionData, isPending } = useSession();
 
   const [profile, setProfile] = useState({
     name: '',
     email: '',
     phone: '+1 (555) 019-2834',
-    address: '142 Kyoto Atelier Way',
-    city: 'Kyoto',
-    postalCode: '600-8216',
-    country: 'Japan',
   });
 
   const [isEditing, setEditing] = useState(false);
+
+  // Address states
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addressLoading, setAddressLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newStreet, setNewStreet] = useState('');
+  const [newCity, setNewCity] = useState('');
+  const [newCountry, setNewCountry] = useState('United States');
+  const [newLabel, setNewLabel] = useState('home'); // 'home' | 'work' | 'other'
 
   useEffect(() => {
     if (sessionData?.user) {
@@ -31,17 +36,54 @@ export default function AccountPage() {
         name: sessionData.user.name || '',
         email: sessionData.user.email || '',
       }));
+      // Fetch saved addresses
+      loadAddresses();
     }
   }, [sessionData]);
 
+  const loadAddresses = async () => {
+    setAddressLoading(true);
+    const data = await fetchUserAddresses();
+    setAddresses(data);
+    setAddressLoading(false);
+  };
+
   const handleSignOut = async () => {
-    await authClient.signOut();
+    await signOutUser();
     router.push('/login');
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setEditing(false);
+  };
+
+  const handleAddAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStreet || !newCity || !newCountry) return;
+
+    const newAddr = await createUserAddress({
+      street: newStreet,
+      city: newCity,
+      country: newCountry,
+      label: newLabel,
+    });
+
+    if (newAddr) {
+      setAddresses((prev) => [newAddr, ...prev]);
+      setNewStreet('');
+      setNewCity('');
+      setNewCountry('United States');
+      setNewLabel('home');
+      setShowAddForm(false);
+    }
+  };
+
+  const handleDeleteAddress = async (id: string) => {
+    const success = await deleteUserAddress(id);
+    if (success) {
+      setAddresses((prev) => prev.filter((addr) => addr.id !== id));
+    }
   };
 
   if (isPending) {
@@ -92,116 +134,191 @@ export default function AccountPage() {
       {/* Profile Details Split */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter items-start">
         {/* Profile Card Info */}
-        <div className="md:col-span-8 bg-surface-container-low p-8 border border-outline-variant/30 space-y-6">
-          <div className="flex justify-between items-baseline border-b border-outline-variant/20 pb-4">
-            <h2 className="font-label-caps text-label-caps text-primary">PERSONAL PROFILE</h2>
-            <div className="flex gap-4">
-              {!isEditing && (
+        <div className="md:col-span-8 space-y-12">
+          
+          {/* Personal Profile Details */}
+          <div className="bg-surface-container-low p-8 border border-outline-variant/30 space-y-6">
+            <div className="flex justify-between items-baseline border-b border-outline-variant/20 pb-4">
+              <h2 className="font-label-caps text-label-caps text-primary">PERSONAL PROFILE</h2>
+              <div className="flex gap-4">
+                {!isEditing && (
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="font-label-caps text-[10px] text-on-surface-variant hover:text-primary underline cursor-pointer"
+                  >
+                    EDIT DETAILS
+                  </button>
+                )}
                 <button
-                  onClick={() => setEditing(true)}
-                  className="font-label-caps text-[10px] text-on-surface-variant hover:text-primary underline cursor-pointer"
+                  onClick={handleSignOut}
+                  className="font-label-caps text-[10px] text-error hover:opacity-85 underline cursor-pointer"
                 >
-                  EDIT DETAILS
+                  SIGN OUT
                 </button>
-              )}
-              <button
-                onClick={handleSignOut}
-                className="font-label-caps text-[10px] text-error hover:opacity-85 underline cursor-pointer"
-              >
-                SIGN OUT
-              </button>
+              </div>
             </div>
+
+            {isEditing ? (
+              <form onSubmit={handleSave} className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <Input
+                    label="Full Name"
+                    id="name"
+                    value={profile.name}
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                    required
+                  />
+                  <Input
+                    label="Email Address"
+                    id="email"
+                    type="email"
+                    value={profile.email}
+                    onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                    required
+                    disabled
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <Input
+                    label="Phone Number"
+                    id="phone"
+                    value={profile.phone}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                  />
+                </div>
+                <div className="flex justify-end gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setEditing(false)}
+                    className="font-label-caps text-[10px] text-on-surface-variant hover:text-primary cursor-pointer"
+                  >
+                    CANCEL
+                  </button>
+                  <Button variant="primary" type="submit">
+                    SAVE CHANGES
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 font-sans text-sm text-on-surface-variant">
+                <div className="space-y-1">
+                  <span className="font-label-caps text-[10px] text-primary block">FULL NAME</span>
+                  <p className="text-primary font-medium">{profile.name}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="font-label-caps text-[10px] text-primary block">EMAIL ADDRESS</span>
+                  <p className="text-primary font-medium">{profile.email}</p>
+                </div>
+                <div className="space-y-1 col-span-2">
+                  <span className="font-label-caps text-[10px] text-primary block">PHONE NUMBER</span>
+                  <p className="text-primary font-medium">{profile.phone}</p>
+                </div>
+              </div>
+            )}
           </div>
 
-          {isEditing ? (
-            <form onSubmit={handleSave} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <Input
-                  label="Full Name"
-                  id="name"
-                  value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                  required
-                />
-                <Input
-                  label="Email Address"
-                  id="email"
-                  type="email"
-                  value={profile.email}
-                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                  required
-                  disabled
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <Input
-                  label="Phone Number"
-                  id="phone"
-                  value={profile.phone}
-                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                />
-                <Input
-                  label="Address Line"
-                  id="address"
-                  value={profile.address}
-                  onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <Input
-                  label="City"
-                  id="city"
-                  value={profile.city}
-                  onChange={(e) => setProfile({ ...profile, city: e.target.value })}
-                />
-                <Input
-                  label="Postal Code"
-                  id="postalCode"
-                  value={profile.postalCode}
-                  onChange={(e) => setProfile({ ...profile, postalCode: e.target.value })}
-                />
-                <Input
-                  label="Country"
-                  id="country"
-                  value={profile.country}
-                  onChange={(e) => setProfile({ ...profile, country: e.target.value })}
-                />
-              </div>
-              <div className="flex justify-end gap-4 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setEditing(false)}
-                  className="font-label-caps text-[10px] text-on-surface-variant hover:text-primary cursor-pointer"
-                >
-                  CANCEL
-                </button>
-                <Button variant="primary" type="submit">
-                  SAVE CHANGES
-                </Button>
-              </div>
-            </form>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 font-sans text-sm text-on-surface-variant">
-              <div className="space-y-1">
-                <span className="font-label-caps text-[10px] text-primary block">FULL NAME</span>
-                <p className="text-primary font-medium">{profile.name}</p>
-              </div>
-              <div className="space-y-1">
-                <span className="font-label-caps text-[10px] text-primary block">EMAIL ADDRESS</span>
-                <p className="text-primary font-medium">{profile.email}</p>
-              </div>
-              <div className="space-y-1">
-                <span className="font-label-caps text-[10px] text-primary block">PHONE NUMBER</span>
-                <p className="text-primary font-medium">{profile.phone}</p>
-              </div>
-              <div className="space-y-1">
-                <span className="font-label-caps text-[10px] text-primary block">DEFAULT ADDRESS</span>
-                <p className="text-primary font-medium">
-                  {profile.address}, {profile.city}, {profile.postalCode}, {profile.country}
-                </p>
-              </div>
+          {/* Address Book Card */}
+          <div className="bg-surface-container-low p-8 border border-outline-variant/30 space-y-6">
+            <div className="flex justify-between items-baseline border-b border-outline-variant/20 pb-4">
+              <h2 className="font-label-caps text-label-caps text-primary">ADDRESS BOOK</h2>
+              <button
+                onClick={() => setShowAddForm(!showAddForm)}
+                className="font-label-caps text-[10px] text-on-surface-variant hover:text-primary underline cursor-pointer"
+              >
+                {showAddForm ? 'CANCEL' : 'ADD NEW ADDRESS'}
+              </button>
             </div>
-          )}
+
+            {showAddForm && (
+              <form onSubmit={handleAddAddress} className="space-y-6 bg-surface-container-lowest p-6 border border-outline-variant/20">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <Input
+                    label="Street Address"
+                    id="newStreet"
+                    value={newStreet}
+                    onChange={(e) => setNewStreet(e.target.value)}
+                    placeholder="123 Atelier Street"
+                    required
+                  />
+                  <Input
+                    label="City"
+                    id="newCity"
+                    value={newCity}
+                    onChange={(e) => setNewCity(e.target.value)}
+                    placeholder="Kyoto"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <Input
+                    label="Country"
+                    id="newCountry"
+                    value={newCountry}
+                    onChange={(e) => setNewCountry(e.target.value)}
+                    placeholder="Japan"
+                    required
+                  />
+                  <div>
+                    <label htmlFor="newLabel" className="block text-xs font-semibold text-primary uppercase tracking-wider mb-2">
+                      Address Label
+                    </label>
+                    <select
+                      id="newLabel"
+                      value={newLabel}
+                      onChange={(e) => setNewLabel(e.target.value)}
+                      className="w-full bg-transparent border-b border-outline-variant py-2.5 text-sm focus:outline-none focus:border-primary transition-colors cursor-pointer"
+                    >
+                      <option value="home">Home</option>
+                      <option value="work">Work</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <Button variant="primary" type="submit">
+                    SAVE ADDRESS
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {addressLoading ? (
+              <p className="font-sans text-xs text-on-surface-variant animate-pulse">LOADING ADDRESSES...</p>
+            ) : addresses.length === 0 ? (
+              <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
+                No saved addresses found. Add a delivery address to expedite your checkout process.
+              </p>
+            ) : (
+              <div className="divide-y divide-outline-variant/20 font-sans text-sm text-on-surface-variant">
+                {addresses.map((addr) => (
+                  <div key={addr.id} className="py-4 flex justify-between items-start first:pt-0 last:pb-0">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-label-caps text-[9px] bg-primary text-on-primary px-2 py-0.5 font-bold tracking-wider select-none uppercase">
+                          {addr.label}
+                        </span>
+                        <span className="text-primary font-medium text-xs">
+                          {addr.street}
+                        </span>
+                      </div>
+                      <p className="text-xs text-on-surface-variant pl-0.5">
+                        {addr.city}, {addr.country}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteAddress(addr.id)}
+                      className="font-label-caps text-[9px] text-on-surface-variant hover:text-error hover:underline cursor-pointer select-none"
+                    >
+                      DELETE
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
         </div>
 
         {/* Info panel */}

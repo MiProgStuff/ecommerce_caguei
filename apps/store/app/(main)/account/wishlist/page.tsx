@@ -7,13 +7,13 @@ import { Heart } from 'lucide-react';
 import { useStore } from '../../../../lib/context/store-context';
 import ProductCard from '../../../../components/product/product-card';
 import Button from '../../../../components/shared/button';
-import { authClient } from '../../../../lib/auth-client';
+import { useSession } from '../../../../lib/api';
 
 export default function AccountWishlistPage() {
   const pathname = usePathname();
   const router = useRouter();
   const { wishlist } = useStore();
-  const { data: sessionData, isPending } = authClient.useSession();
+  const { data: sessionData, isPending } = useSession();
 
   if (isPending) {
     return (

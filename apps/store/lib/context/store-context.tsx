@@ -2,8 +2,20 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product } from '../products';
+import {
+  useSession,
+  fetchCart,
+  addToDbCart,
+  updateDbCart,
+  removeFromDbCart,
+  clearDbCart,
+  fetchWishlist,
+  addToDbWishlist,
+  removeFromDbWishlist,
+} from '../api';
 
 export interface CartItem {
+  dbId?: string; // Optional database item ID
   product: Product;
   selectedSize: string;
   quantity: number;
@@ -38,47 +50,113 @@ export function GlobalStoreProvider({ children }: { children: React.ReactNode })
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Load cart and wishlist from localStorage on mount
+  const { data: sessionData, isPending } = useSession();
+
+  // Load and sync cart & wishlist based on authentication status
   useEffect(() => {
-    const savedCart = localStorage.getItem('caguei_cart');
-    const savedWishlist = localStorage.getItem('caguei_wishlist');
-    if (savedCart) {
-      try {
-        const parsed = JSON.parse(savedCart);
-        if (Array.isArray(parsed)) {
-          const validCart = parsed.filter(
-            (item) => item && item.product && typeof item.product.price === 'number'
+    if (isPending) return;
+
+    const syncState = async () => {
+      if (sessionData?.user) {
+        try {
+          // 1. Sync and merge wishlist
+          const dbWishlist = await fetchWishlist();
+          const localWishlistStr = localStorage.getItem('caguei_wishlist');
+          if (localWishlistStr) {
+            const localWishlist = JSON.parse(localWishlistStr);
+            if (Array.isArray(localWishlist)) {
+              for (const item of localWishlist) {
+                if (item?.id && !dbWishlist.some((dw) => dw.id === item.id)) {
+                  await addToDbWishlist(item.id);
+                }
+              }
+            }
+            localStorage.removeItem('caguei_wishlist');
+          }
+          const finalWishlist = await fetchWishlist();
+          setWishlist(finalWishlist);
+
+          // 2. Sync and merge cart
+          const dbCart = await fetchCart();
+          const localCartStr = localStorage.getItem('caguei_cart');
+          if (localCartStr) {
+            const localCart = JSON.parse(localCartStr);
+            if (Array.isArray(localCart)) {
+              for (const item of localCart) {
+                if (item?.product && item?.selectedSize) {
+                  const inDb = dbCart.some(
+                    (dc) => dc.productId === item.product.id && dc.size === item.selectedSize
+                  );
+                  if (!inDb) {
+                    await addToDbCart(item.product.id, item.quantity, item.selectedSize);
+                  }
+                }
+              }
+            }
+            localStorage.removeItem('caguei_cart');
+          }
+          const finalDbCart = await fetchCart();
+          setCart(
+            finalDbCart.map((item) => ({
+              dbId: item.id,
+              product: item.product as any,
+              selectedSize: item.size,
+              quantity: item.quantity,
+            }))
           );
-          setCart(validCart);
+        } catch (error) {
+          console.error('Error syncing store state with database:', error);
         }
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    if (savedWishlist) {
-      try {
-        const parsed = JSON.parse(savedWishlist);
-        if (Array.isArray(parsed)) {
-          const validWishlist = parsed.filter((p) => p && typeof p.id === 'string');
-          setWishlist(validWishlist);
+      } else {
+        // User is logged out: fetch locally
+        const savedCart = localStorage.getItem('caguei_cart');
+        const savedWishlist = localStorage.getItem('caguei_wishlist');
+        if (savedCart) {
+          try {
+            const parsed = JSON.parse(savedCart);
+            if (Array.isArray(parsed)) {
+              setCart(parsed.filter((item) => item?.product && typeof item.product.price === 'number'));
+            }
+          } catch (e) {
+            console.error('Failed to parse local cart:', e);
+          }
+        } else {
+          setCart([]);
         }
-      } catch (e) {
-        console.error(e);
+        if (savedWishlist) {
+          try {
+            const parsed = JSON.parse(savedWishlist);
+            if (Array.isArray(parsed)) {
+              setWishlist(parsed.filter((p) => p && typeof p.id === 'string'));
+            }
+          } catch (e) {
+            console.error('Failed to parse local wishlist:', e);
+          }
+        } else {
+          setWishlist([]);
+        }
       }
+    };
+
+    syncState();
+  }, [sessionData, isPending]);
+
+  // Persist local cart changes for guests
+  useEffect(() => {
+    if (!sessionData?.user) {
+      localStorage.setItem('caguei_cart', JSON.stringify(cart));
     }
-  }, []);
+  }, [cart, sessionData]);
 
-  // Save cart to localStorage when changed
+  // Persist local wishlist changes for guests
   useEffect(() => {
-    localStorage.setItem('caguei_cart', JSON.stringify(cart));
-  }, [cart]);
+    if (!sessionData?.user) {
+      localStorage.setItem('caguei_wishlist', JSON.stringify(wishlist));
+    }
+  }, [wishlist, sessionData]);
 
-  // Save wishlist to localStorage when changed
-  useEffect(() => {
-    localStorage.setItem('caguei_wishlist', JSON.stringify(wishlist));
-  }, [wishlist]);
-
-  const addToCart = (product: Product, size: string, quantity = 1) => {
+  const addToCart = async (product: Product, size: string, quantity = 1) => {
+    // Optimistically update client state
     setCart((prevCart) => {
       const existingItemIndex = prevCart.findIndex(
         (item) => item.product.id === product.id && item.selectedSize === size
@@ -93,19 +171,42 @@ export function GlobalStoreProvider({ children }: { children: React.ReactNode })
       return [...prevCart, { product, selectedSize: size, quantity }];
     });
     setCartOpen(true);
+
+    // Sync changes to server
+    if (sessionData?.user) {
+      await addToDbCart(product.id, quantity, size);
+      const finalDbCart = await fetchCart();
+      setCart(
+        finalDbCart.map((item) => ({
+          dbId: item.id,
+          product: item.product as any,
+          selectedSize: item.size,
+          quantity: item.quantity,
+        }))
+      );
+    }
   };
 
-  const removeFromCart = (productId: string, size: string) => {
+  const removeFromCart = async (productId: string, size: string) => {
+    const item = cart.find((item) => item.product.id === productId && item.selectedSize === size);
+
     setCart((prevCart) =>
       prevCart.filter((item) => !(item.product.id === productId && item.selectedSize === size))
     );
+
+    if (sessionData?.user && item?.dbId) {
+      await removeFromDbCart(item.dbId);
+    }
   };
 
-  const updateCartQuantity = (productId: string, size: string, quantity: number) => {
+  const updateCartQuantity = async (productId: string, size: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId, size);
+      await removeFromCart(productId, size);
       return;
     }
+
+    const item = cart.find((item) => item.product.id === productId && item.selectedSize === size);
+
     setCart((prevCart) =>
       prevCart.map((item) =>
         item.product.id === productId && item.selectedSize === size
@@ -113,20 +214,37 @@ export function GlobalStoreProvider({ children }: { children: React.ReactNode })
           : item
       )
     );
+
+    if (sessionData?.user && item?.dbId) {
+      await updateDbCart(item.dbId, quantity);
+    }
   };
 
-  const clearCart = () => {
+  const clearCart = async () => {
     setCart([]);
+
+    if (sessionData?.user) {
+      await clearDbCart();
+    }
   };
 
-  const toggleWishlist = (product: Product) => {
+  const toggleWishlist = async (product: Product) => {
+    const isAlreadyIn = wishlist.some((item) => item.id === product.id);
+
     setWishlist((prevWishlist) => {
-      const isAlreadyIn = prevWishlist.some((item) => item.id === product.id);
       if (isAlreadyIn) {
         return prevWishlist.filter((item) => item.id !== product.id);
       }
       return [...prevWishlist, product];
     });
+
+    if (sessionData?.user) {
+      if (isAlreadyIn) {
+        await removeFromDbWishlist(product.id);
+      } else {
+        await addToDbWishlist(product.id);
+      }
+    }
   };
 
   const isInWishlist = (productId: string) => {

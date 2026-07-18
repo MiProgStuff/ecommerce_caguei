@@ -6,7 +6,7 @@ This document describes the design patterns, package configurations, and network
 
 ## Workspace Layout
 
-We use **pnpm workspaces** and **Turborepo** to orchestrate dependencies, caching, and builds across our project services:
+We use **pnpm workspaces** to orchestrate dependencies, caching, and builds across project services:
 
 ```text
 caguei-ecommerce/
@@ -16,36 +16,66 @@ caguei-ecommerce/
     api/ (Express.js Backend - centralized API & Auth server)
   packages/
     db/ (Shared Prisma database ORM wrapper)
-    ui/ (Shared frontend components)
-    eslint-config/
-    typescript-config/
+  docs/
+    api-reference.md
+    architecture.md
+    design-system.md
+    getting-started.md
 ```
 
 ---
 
-## Architectural Data Flow
+## Data Flow — Authentication
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User as Web Client
-    participant FE as apps/store (or apps/admin)
+    participant FE as apps/store
     participant API as apps/api (Express.js)
     participant DB as packages/db (Prisma)
-    participant PG as PostgreSQL Database
 
-    User->>FE: Request /login (Submit email)
-    FE->>API: POST /api/auth/email-otp/send-verification-otp (Request OTP)
-    API->>DB: Check/Create verification token
-    DB->>PG: Insert Verification Token record
-    API-->>API: Print 6-digit OTP code to stdout console
-    API-->>FE: Return success payload
-    User->>FE: Enter OTP (Submit code)
-    FE->>API: POST /api/auth/sign-in/email-otp (Submit code & email)
-    API->>DB: Verify token & Create session
-    DB->>PG: Insert Session record
-    API-->>User: Set-Cookie: better-auth.session_token (HTTPOnly Cookie)
-    FE->>User: Redirect to protected dashboard /account
+    User->>FE: Submit email at /login or /checkout
+    FE->>API: POST /api/auth/email-otp/send-verification-otp
+    API-->>API: Print OTP to stdout (dev) or send via email
+    User->>FE: Enter 6-digit OTP
+    FE->>API: POST /api/auth/sign-in/email-otp
+    API->>DB: Verify token & create session
+    API-->>User: Set-Cookie: better-auth.session_token (HTTPOnly)
+    FE->>User: Redirect to protected route /account
+```
+
+---
+
+## Data Flow — Stripe Checkout (Secure Payment Confirmation)
+
+This is the key security pattern. **The order is never created from client data.** Stripe's webhook is the authoritative source of truth.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Customer
+    participant Store as apps/store (Next.js)
+    participant API as apps/api (Express.js)
+    participant Stripe as Stripe
+    participant DB as PostgreSQL
+
+    User->>Store: Selects address, clicks "Proceed to Payment"
+    Store->>API: POST /api/payments/create-intent (cart + addressId)
+    API->>API: Verify products exist, calculate server-authoritative total
+    API->>Stripe: stripe.paymentIntents.create({ amount, metadata })
+    Stripe-->>API: { id, client_secret }
+    API-->>Store: { clientSecret }
+    Store->>User: Renders Stripe PaymentElement (hosted card form)
+    User->>Stripe: Enters card, submits (stripe.confirmPayment)
+    Stripe-->>Store: Redirect to /order-success?payment_intent=...
+    Stripe-->>API: POST /api/webhooks/stripe (payment_intent.succeeded)
+    API->>API: Verify Stripe webhook signature
+    API->>DB: BEGIN TRANSACTION
+    API->>DB: Create Order + OrderItems (status: PAID)
+    API->>DB: DELETE CartItems for userId
+    API->>DB: COMMIT
+    Store->>User: Displays order confirmation with reference number
 ```
 
 ---
@@ -53,31 +83,43 @@ sequenceDiagram
 ## Technical Component Details
 
 ### 1. Central API Backend (`apps/api`)
-- Built on **Express.js** and TypeScript.
-- Runs on port `4000` (`http://localhost:4000`).
-- Configures CORS options to trust and exchange credentials (cookies) with local frontend origins:
-  - Storefront Origin: `http://localhost:3000`
-  - Admin Portal Origin: `http://localhost:3001`
-- Exposes a catch-all route mapping BetterAuth handlers:
-  ```typescript
-  app.all('/api/auth/*', toNodeHandler(auth));
-  ```
+- Built on **Express.js** and TypeScript, running on port `4000`.
+- CORS configured to trust `localhost:3000` (store) and `localhost:3001` (admin) with cookie credentials.
+- **Stripe webhook** endpoint uses `express.raw()` middleware (must come before `express.json()`) for signature verification.
+- All order creation is performed exclusively by the Stripe webhook — never from the client.
 
-### 2. Shared Database Adapter (`packages/db`)
-- Defines the core relational data models (`User`, `Session`, `Account`, `Verification`) in a single `prisma/schema.prisma` file.
-- Imports the **pg** pool client and **PrismaPg** driver adapter. Because Prisma 7 deprecates native client binaries, all database connections compile as typed WebAssembly client instances.
-- Instantiates a global singleton database client exported as `prisma`.
+### 2. Stripe Security Model
+- The client receives only a `clientSecret` to initialize the Stripe PaymentElement.
+- All pricing is **recalculated server-side** when creating the PaymentIntent by verifying product prices from the DB.
+- The webhook verifies the Stripe signature using `STRIPE_WEBHOOK_SECRET` before trusting any event.
+- Webhook handlers are **idempotent** — replayed events are ignored if the order already exists.
 
-### 3. Server Component Route Protection
-- Next.js App Router folders use route grouping `(main)` to enforce server-side layout authentication gates.
-- In `app/(main)/layout.tsx`, the component extracts incoming headers and requests verification checks directly from the database:
-  ```typescript
-  const session = await auth.api.getSession({
-    headers: await headers()
-  });
+### 3. Shared Database Adapter (`packages/db`)
+- Defines all relational data models in `prisma/schema.prisma`:
+  - Auth: `User`, `Session`, `Account`, `Verification`
+  - Commerce: `Address`, `Product`, `CartItem`, `WishlistItem`, `Order`, `OrderItem`
+- `Order.stripePaymentIntentId` is stored as a unique field enabling idempotent webhook processing.
 
-  if (!session) {
-    redirect('/login');
-  }
-  ```
-  This server-side redirect prevents page flashing and secures private HTML rendering.
+### 4. Storefront State Management (`apps/store/lib/context/store-context.tsx`)
+- Uses `useSession()` hook to detect authentication status.
+- On login: merges guest `localStorage` cart/wishlist into the DB, then loads DB state.
+- All mutations (`addToCart`, `removeFromCart`, etc.) optimistically update local state and asynchronously sync to the DB.
+- On logout: falls back to `localStorage`.
+
+### 5. Server Component Route Protection
+- `app/(main)/layout.tsx` calls `auth.api.getSession()` server-side.
+- Unauthenticated users are redirected to `/login` before any page HTML renders.
+
+---
+
+## Environment Variables
+
+| App | Variable | Description |
+|-----|----------|-------------|
+| `api` | `DATABASE_URL` | PostgreSQL connection string |
+| `api` | `BETTER_AUTH_SECRET` | BetterAuth signing secret |
+| `api` | `BETTER_AUTH_URL` | API server base URL |
+| `api` | `STRIPE_SECRET_KEY` | Stripe secret key (`sk_test_...`) |
+| `api` | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret (`whsec_...`) |
+| `store` | `NEXT_PUBLIC_API_URL` | API base URL for client-side fetches |
+| `store` | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (`pk_test_...`) |

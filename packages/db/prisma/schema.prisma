@@ -12,10 +12,16 @@ model User {
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
+  phoneNumber   String?
+  address       String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  addresses     Address[]
+  cartItems     CartItem[]
+  wishlist      WishlistItem[]
+  orders        Order[]
 
   @@map("user")
 }
@@ -62,4 +68,106 @@ model Verification {
   updatedAt  DateTime? @updatedAt
 
   @@map("verification")
+}
+
+model Address {
+  id          String   @id @default(uuid())
+  street      String
+  city        String
+  state       String?
+  postalCode  String?
+  country     String
+  label       String   @default("home") // "home", "work", "other"
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orders      Order[]
+
+  @@map("address")
+}
+
+model Product {
+  id          String         @id
+  slug        String         @unique
+  name        String
+  category    String
+  price       Float
+  currency    String
+  color       String
+  material    String
+  description String
+  images      String[]
+  details     String[]
+  fabricCare  String
+  shipping    String
+  sizes       String[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  cartItems   CartItem[]
+  wishlist    WishlistItem[]
+  orderItems  OrderItem[]
+
+  @@map("product")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  size      String   // E.g., "S", "M", "L"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId, size])
+  @@map("cart_item")
+}
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("wishlist_item")
+}
+
+model Order {
+  id                     String      @id @default(uuid())
+  userId                 String
+  user                   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addressId              String
+  address                Address     @relation(fields: [addressId], references: [id], onDelete: Restrict)
+  status                 String      @default("PENDING") // PENDING, PAID, PROCESSING, COMPLETED, CANCELLED
+  stripePaymentIntentId  String?     @unique
+  subtotal               Float
+  shippingCost           Float
+  estimatedTax           Float
+  grandTotal             Float
+  orderItems             OrderItem[]
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+
+  @@map("order")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Int
+  size      String   // Size purchased
+  price     Float    // Snapshotted price at transaction time
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("order_item")
 }

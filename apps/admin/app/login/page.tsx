@@ -3,19 +3,23 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { KeyRound } from 'lucide-react';
-import { authClient } from '../../lib/auth-client';
+import { checkUserExists, sendVerificationOtp, signInWithOtp, createUserAddress } from '../../lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [name, setName] = useState('');
-  const [stage, setStage] = useState<'email' | 'otp'>('email');
+  const [phone, setPhone] = useState('');
+  const [street, setStreet] = useState('');
+  const [city, setCity] = useState('');
+  const [country, setCountry] = useState('United States');
+  const [stage, setStage] = useState<'email' | 'register' | 'otp'>('email');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
@@ -24,19 +28,48 @@ export default function LoginPage() {
     setMessage('');
 
     try {
-      const response = await authClient.emailOtp.sendVerificationOtp({
-        email,
-        type: 'sign-in',
-      });
+      const exists = await checkUserExists(email);
+      if (exists) {
+        // User exists, send OTP directly
+        const response = await sendVerificationOtp(email, 'sign-in');
+        if (response.error) {
+          setError(response.error.message || 'Failed to send verification code.');
+        } else {
+          setMessage(`Verification code sent to ${email}.`);
+          setStage('otp');
+        }
+      } else {
+        // User does not exist, go to register stage
+        setStage('register');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'An error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !phone || !street || !city || !country) {
+      setError('Please fill in all fields to register.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const response = await sendVerificationOtp(email, 'sign-in');
       if (response.error) {
         setError(response.error.message || 'Failed to send verification code.');
       } else {
-        setMessage(`Verification code sent to ${email}.`);
+        setMessage(`Verification code has been sent to ${email}. Please verify to register.`);
         setStage('otp');
       }
     } catch (err: any) {
-      setError(err?.message || 'An unexpected error occurred.');
+      setError(err?.message || 'An error occurred.');
     } finally {
       setLoading(false);
     }
@@ -50,15 +83,26 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await authClient.signIn.emailOtp({
+      const response = await signInWithOtp(
         email,
         otp,
-        name: name || undefined,
-      });
+        name || undefined,
+        phone || undefined,
+        street || undefined
+      );
 
       if (response.error) {
-        setError(response.error.message || 'Invalid verification code.');
+        setError(response.error.message || 'Invalid verification code. Please try again.');
       } else {
+        // If registration details were provided, save their first Address record!
+        if (name && phone && street && city) {
+          await createUserAddress({
+            street,
+            city,
+            country,
+            label: 'home',
+          });
+        }
         router.push('/');
       }
     } catch (err: any) {
@@ -95,8 +139,8 @@ export default function LoginPage() {
           </div>
         )}
 
-        {stage === 'email' ? (
-          <form onSubmit={handleSendOtp} className="space-y-6">
+        {stage === 'email' && (
+          <form onSubmit={handleEmailSubmit} className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
                 Email Address
@@ -118,23 +162,33 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-black text-white py-3 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity cursor-pointer"
             >
-              {loading ? 'SENDING CODE...' : 'REQUEST ACCESS CODE'}
+              {loading ? 'CHECKING...' : 'CONTINUE'}
             </button>
           </form>
-        ) : (
-          <form onSubmit={handleVerifyOtp} className="space-y-6">
+        )}
+
+        {stage === 'register' && (
+          <form onSubmit={handleRegisterSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                Create an Admin Account
+              </h2>
+              <p className="text-xs text-gray-500">
+                Email <strong>{email}</strong> is not registered. Please provide your profile details to register.
+              </p>
+            </div>
+
             <div className="space-y-4">
               <div>
-                <label htmlFor="otp" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
-                  Verification Code
+                <label htmlFor="name" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
+                  Full Name
                 </label>
                 <input
-                  id="otp"
+                  id="name"
                   type="text"
-                  placeholder="6-digit code"
-                  maxLength={6}
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   required
                   disabled={loading}
                   className="w-full border-b border-gray-300 py-2 text-sm focus:outline-none focus:border-black transition-colors"
@@ -142,19 +196,109 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label htmlFor="name" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
-                  Display Name (New admins)
+                <label htmlFor="phone" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
+                  Phone Number
                 </label>
                 <input
-                  id="name"
-                  type="text"
-                  placeholder="Optional"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  id="phone"
+                  type="tel"
+                  placeholder="+1 (555) 000-0000"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
                   disabled={loading}
                   className="w-full border-b border-gray-300 py-2 text-sm focus:outline-none focus:border-black transition-colors"
                 />
               </div>
+
+              <div>
+                <label htmlFor="street" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
+                  Street Address
+                </label>
+                <input
+                  id="street"
+                  type="text"
+                  placeholder="Office street address"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  required
+                  disabled={loading}
+                  className="w-full border-b border-gray-300 py-2 text-sm focus:outline-none focus:border-black transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="city" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
+                    City
+                  </label>
+                  <input
+                    id="city"
+                    type="text"
+                    placeholder="New York"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    required
+                    disabled={loading}
+                    className="w-full border-b border-gray-300 py-2 text-sm focus:outline-none focus:border-black transition-colors"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="country" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
+                    Country
+                  </label>
+                  <input
+                    id="country"
+                    type="text"
+                    placeholder="United States"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    required
+                    disabled={loading}
+                    className="w-full border-b border-gray-300 py-2 text-sm focus:outline-none focus:border-black transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center text-xs pt-2">
+              <button
+                type="button"
+                onClick={() => setStage('email')}
+                className="text-black underline cursor-pointer hover:opacity-70"
+                disabled={loading}
+              >
+                Back
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-black text-white py-3 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              {loading ? 'SENDING CODE...' : 'SEND OTP & REGISTER'}
+            </button>
+          </form>
+        )}
+
+        {stage === 'otp' && (
+          <form onSubmit={handleVerifyOtp} className="space-y-6">
+            <div>
+              <label htmlFor="otp" className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">
+                Verification Code
+              </label>
+              <input
+                id="otp"
+                type="text"
+                placeholder="6-digit code"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                required
+                disabled={loading}
+                className="w-full border-b border-gray-300 py-2 text-sm focus:outline-none focus:border-black transition-colors"
+              />
             </div>
 
             <div className="flex justify-between items-center text-xs">

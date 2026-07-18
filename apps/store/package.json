@@ -12,6 +12,8 @@
     "@caguei/db": "workspace:*",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@stripe/react-stripe-js": "^6.8.0",
+    "@stripe/stripe-js": "^9.10.0",
     "better-auth": "^1.6.23",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.25.0",

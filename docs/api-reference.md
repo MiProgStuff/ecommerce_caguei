@@ -13,94 +13,159 @@ Sends a 6-digit OTP code to the requested email address. In development, the cod
 
 - **URL:** `/api/auth/email-otp/send-verification-otp`
 - **Method:** `POST`
-- **Headers:** `Content-Type: application/json`
-- **Payload:**
-  ```json
-  {
-    "email": "user@example.com",
-    "type": "sign-in"
-  }
-  ```
-- **Response (200 Success):**
-  ```json
-  {
-    "success": true
-  }
-  ```
-
----
+- **Payload:** `{ "email": "user@example.com", "type": "sign-in" }`
+- **Response:** `{ "success": true }`
 
 ### 2. Verify Code & Sign In
-Verifies the 6-digit OTP code. If the code is correct, the server authenticates the user, generates a session token, and sets the session cookie. If the user doesn't have an account, it registers them automatically.
-
 - **URL:** `/api/auth/sign-in/email-otp`
 - **Method:** `POST`
-- **Headers:** `Content-Type: application/json`
+- **Payload:** `{ "email": "...", "otp": "123456", "name": "John Doe" }`
+- **Response:** Sets `better-auth.session_token` cookie; returns `{ session, user }`.
+
+### 3. Sign Out
+- **URL:** `/api/auth/sign-out`
+- **Method:** `POST`
+- **Response:** Clears session cookie; returns `{ success: true }`.
+
+### 4. Fetch Session
+- **URL:** `/api/auth/get-session`
+- **Method:** `GET`
+- **Response:** `{ session, user }` or `null`.
+
+---
+
+## Health Check
+
+- **URL:** `GET /api/health`
+- **Response:** `{ "status": "ok", "database": "connected" }`
+
+---
+
+## User Endpoints
+
+### Check if User Exists
+- **URL:** `GET /api/users/check?email=<email>`
+- **Response:** `{ "exists": boolean }`
+
+---
+
+## Address Endpoints
+
+All address endpoints require an authenticated session cookie.
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `GET` | `/api/addresses` | Fetch all saved addresses for the current user |
+| `POST` | `/api/addresses` | Create a new address |
+| `DELETE` | `/api/addresses/:id` | Delete an address by ID (must own it) |
+
+**POST `/api/addresses` payload:**
+```json
+{
+  "street": "123 Sakura Lane",
+  "city": "Kyoto",
+  "state": "Kyoto Prefecture",
+  "postalCode": "604-0000",
+  "country": "Japan",
+  "label": "home"
+}
+```
+`label` must be one of: `"home"`, `"work"`, `"other"`.
+
+---
+
+## Cart Endpoints
+
+All cart endpoints require an authenticated session cookie.
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `GET` | `/api/cart` | Get all cart items with product data |
+| `POST` | `/api/cart` | Add item to cart (or increment if exists) |
+| `PUT` | `/api/cart/:id` | Update quantity of a cart item |
+| `DELETE` | `/api/cart/:id` | Remove a single cart item |
+| `DELETE` | `/api/cart` | Clear entire cart |
+
+---
+
+## Wishlist Endpoints
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `GET` | `/api/wishlist` | Get all wishlisted products |
+| `POST` | `/api/wishlist` | Add product to wishlist |
+| `DELETE` | `/api/wishlist/:productId` | Remove product from wishlist |
+
+---
+
+## Payment Endpoints (Stripe)
+
+### Create a Payment Intent
+Creates a Stripe PaymentIntent server-side. The **amount is calculated server-side** by verifying actual product prices — the client-submitted total is never trusted.
+
+- **URL:** `POST /api/payments/create-intent`
+- **Auth:** Session cookie required
 - **Payload:**
   ```json
   {
-    "email": "user@example.com",
-    "otp": "123456",
-    "name": "John Doe" // Optional: used for registration on first login
+    "addressId": "uuid",
+    "subtotal": 420.00,
+    "shippingCost": 25.00,
+    "estimatedTax": 33.60,
+    "grandTotal": 478.60,
+    "items": [
+      { "productId": "...", "quantity": 1, "size": "M", "price": 420.00 }
+    ]
   }
   ```
-- **Response Headers:**
-  - `Set-Cookie: better-auth.session_token=...; HttpOnly; Path=/; SameSite=Lax;`
-- **Response (200 Success):**
-  ```json
-  {
-    "session": {
-      "id": "session-uuid",
-      "userId": "user-uuid",
-      "expiresAt": "2026-07-25T12:00:00.000Z"
-    },
-    "user": {
-      "id": "user-uuid",
-      "email": "user@example.com",
-      "name": "John Doe",
-      "emailVerified": true
-    }
-  }
-  ```
+- **Response:** `{ "clientSecret": "pi_xxx_secret_xxx" }`
 
 ---
 
-### 3. Sign Out
-Terminates the active session and clears the session cookies.
+## Stripe Webhook Handler
 
-- **URL:** `/api/auth/sign-out`
-- **Method:** `POST`
-- **Response Headers:**
-  - `Set-Cookie: better-auth.session_token=; Max-Age=0; Path=/;`
-- **Response (200 Success):**
-  ```json
-  {
-    "success": true
-  }
-  ```
+> **⚠️ Internal — not called by the client.**
 
----
-
-### 4. Fetch Session
-Retrieves details of the currently authenticated session by reading the session token cookie.
-
-- **URL:** `/api/auth/get-session`
-- **Method:** `GET`
-- **Headers:** Includes cookies (`better-auth.session_token`)
-- **Response (200 Success):**
-  - If authenticated: Returns user and session objects.
-  - If unauthenticated: Returns `null`.
+- **URL:** `POST /api/webhooks/stripe`
+- **Auth:** Stripe signature header (`stripe-signature`). Verified server-side using `STRIPE_WEBHOOK_SECRET`.
+- **Event:** `payment_intent.succeeded`
+- **Behavior on success:**
+  1. Verifies the Stripe signature (rejects forged payloads)
+  2. Reads order metadata embedded in the PaymentIntent
+  3. Creates the `Order` and `OrderItem` records in the database atomically
+  4. Clears the user's DB cart
+  5. Is **idempotent** — replayed webhooks are safely ignored if the order already exists
 
 ---
 
-## Health Check Endpoint
+## Orders Endpoints (Read-only)
 
-- **URL:** `/api/health`
-- **Method:** `GET`
-- **Response:**
-  ```json
-  {
-    "status": "ok",
-    "database": "connected"
-  }
-  ```
+Orders are **only created by the Stripe webhook**. The client can only read them.
+
+| Method | URL | Description |
+|--------|-----|-------------|
+| `GET` | `/api/orders` | Get all orders for the current user, with items and address |
+
+---
+
+## TypeScript Client SDK (`store/lib/api.ts`)
+
+| Function | Description |
+|----------|-------------|
+| `useSession()` | React hook for live session state |
+| `sendVerificationOtp(email, type)` | Send OTP email |
+| `signInWithOtp(email, otp, name?)` | Verify OTP and authenticate |
+| `signOutUser()` | Destroy session |
+| `fetchUserAddresses()` | Get all addresses |
+| `createUserAddress(data)` | Save a new address |
+| `deleteUserAddress(id)` | Remove an address |
+| `fetchCart()` | Get DB cart items |
+| `addToDbCart(productId, quantity, size)` | Add/increment cart item |
+| `updateDbCart(id, quantity)` | Update cart item quantity |
+| `removeFromDbCart(id)` | Remove cart item |
+| `clearDbCart()` | Empty DB cart |
+| `fetchWishlist()` | Get wishlisted products |
+| `addToDbWishlist(productId)` | Add to wishlist |
+| `removeFromDbWishlist(productId)` | Remove from wishlist |
+| `createPaymentIntent(data)` | Create Stripe PaymentIntent; returns `{ clientSecret }` |
+| `fetchOrders()` | Fetch user's order history |
