@@ -43,10 +43,28 @@ export function GlobalStoreProvider({ children }: { children: React.ReactNode })
     const savedCart = localStorage.getItem('caguei_cart');
     const savedWishlist = localStorage.getItem('caguei_wishlist');
     if (savedCart) {
-      try { setCart(JSON.parse(savedCart)); } catch (e) { console.error(e); }
+      try {
+        const parsed = JSON.parse(savedCart);
+        if (Array.isArray(parsed)) {
+          const validCart = parsed.filter(
+            (item) => item && item.product && typeof item.product.price === 'number'
+          );
+          setCart(validCart);
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
     if (savedWishlist) {
-      try { setWishlist(JSON.parse(savedWishlist)); } catch (e) { console.error(e); }
+      try {
+        const parsed = JSON.parse(savedWishlist);
+        if (Array.isArray(parsed)) {
+          const validWishlist = parsed.filter((p) => p && typeof p.id === 'string');
+          setWishlist(validWishlist);
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
   }, []);
 

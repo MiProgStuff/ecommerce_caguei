@@ -1,15 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useStore } from '../../lib/context/store-context';
-import Input from '../../components/shared/input';
-import Button from '../../components/shared/button';
+import { useStore } from '../../../lib/context/store-context';
+import Input from '../../../components/shared/input';
+import Button from '../../../components/shared/button';
+import { authClient } from '../../../lib/auth-client';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, clearCart } = useStore();
+  const { data: sessionData } = authClient.useSession();
 
   const [form, setForm] = useState({
     email: '',
@@ -27,7 +29,27 @@ export default function CheckoutPage() {
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  // Inline OTP states
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [authMessage, setAuthMessage] = useState('');
+
+  // Prefill details if user is signed in
+  useEffect(() => {
+    if (sessionData?.user) {
+      const parts = (sessionData.user.name || '').split(' ');
+      setForm((prev) => ({
+        ...prev,
+        email: sessionData.user.email,
+        firstName: prev.firstName || parts[0] || '',
+        lastName: prev.lastName || parts.slice(1).join(' ') || '',
+      }));
+    }
+  }, [sessionData]);
+
+  const subtotal = cart.reduce((sum, item) => sum + (item?.product?.price || 0) * (item?.quantity || 0), 0);
   const currency = cart.length > 0 ? cart[0].product.currency : '$';
   const shippingCost = subtotal >= 500 ? 0 : 25;
   const estimatedTax = subtotal * 0.08;
@@ -59,10 +81,61 @@ export default function CheckoutPage() {
   const handlePlaceOrder = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // Clear cart
       clearCart();
-      // Redirect to success
       router.push('/order-success');
+    }
+  };
+
+  const handleSendOtp = async () => {
+    if (!form.email) {
+      setErrors((prev) => ({ ...prev, email: 'Enter email to send code' }));
+      return;
+    }
+    setOtpLoading(true);
+    setAuthError('');
+    setAuthMessage('');
+
+    try {
+      const response = await authClient.emailOtp.sendVerificationOtp({
+        email: form.email,
+        type: 'sign-in',
+      });
+
+      if (response.error) {
+        setAuthError(response.error.message || 'Failed to send OTP code.');
+      } else {
+        setOtpSent(true);
+        setAuthMessage('Verification code sent to your email.');
+      }
+    } catch (err: any) {
+      setAuthError(err?.message || 'An error occurred.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpCode) return;
+    setOtpLoading(true);
+    setAuthError('');
+
+    try {
+      const response = await authClient.signIn.emailOtp({
+        email: form.email,
+        otp: otpCode,
+      });
+
+      if (response.error) {
+        setAuthError(response.error.message || 'Invalid code.');
+      } else {
+        setOtpSent(false);
+        setOtpCode('');
+        setAuthMessage('Successfully signed in.');
+      }
+    } catch (err: any) {
+      setAuthError(err?.message || 'An error occurred.');
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -93,17 +166,82 @@ export default function CheckoutPage() {
             <h2 className="font-label-caps text-label-caps text-primary border-b border-outline-variant/30 pb-2">
               01 / CONTACT INFORMATION
             </h2>
-            <div className="grid grid-cols-1 gap-6">
-              <Input
-                label="Email Address"
-                id="email"
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                error={errors.email}
-                required
-              />
+            
+            {authError && (
+              <div className="p-3 bg-error/10 border border-error/20 text-error text-xs font-sans">
+                {authError}
+              </div>
+            )}
+
+            {authMessage && (
+              <div className="p-3 bg-primary/5 border border-outline-variant/30 text-on-surface-variant text-xs font-sans">
+                {authMessage}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-end">
+                <div className="sm:col-span-2">
+                  <Input
+                    label="Email Address"
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    error={errors.email}
+                    required
+                    disabled={!!sessionData}
+                  />
+                </div>
+                {!sessionData && (
+                  <div className="pb-1">
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      disabled={otpLoading}
+                      className="w-full border border-outline-variant hover:border-primary text-primary py-3 font-label-caps text-[10px] uppercase tracking-widest cursor-pointer transition-colors"
+                    >
+                      {otpLoading && !otpSent ? 'SENDING...' : 'SEND LOGIN CODE'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* OTP Entry verification inline */}
+              {otpSent && !sessionData && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-end pt-2 bg-surface-container-lowest p-4 border border-outline-variant/20">
+                  <div className="sm:col-span-2">
+                    <Input
+                      label="6-Digit Verification Code"
+                      id="otpCode"
+                      type="text"
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      placeholder="Enter verification code"
+                      required
+                    />
+                  </div>
+                  <div className="pb-1">
+                    <button
+                      type="button"
+                      onClick={handleVerifyOtp}
+                      disabled={otpLoading || !otpCode}
+                      className="w-full bg-primary text-on-primary py-3 font-label-caps text-[10px] uppercase tracking-widest cursor-pointer transition-colors"
+                    >
+                      {otpLoading ? 'VERIFYING...' : 'VERIFY CODE'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {sessionData && (
+                <p className="text-xs text-primary font-sans flex items-center gap-1.5 pt-1">
+                  <span className="w-1.5 h-1.5 bg-success rounded-full" />
+                  Signed in as <strong className="font-bold">{sessionData.user.email}</strong>.
+                </p>
+              )}
             </div>
           </section>
 
@@ -232,7 +370,7 @@ export default function CheckoutPage() {
 
           {/* Cart items list */}
           <div className="divide-y divide-outline-variant/20 max-h-[300px] overflow-y-auto pr-2">
-            {cart.map((item) => (
+            {cart.filter(item => item && item.product).map((item) => (
               <div key={`${item.product.id}-${item.selectedSize}`} className="py-4 flex gap-4 first:pt-0">
                 <div className="w-16 aspect-[3/4] bg-surface-container shrink-0">
                   <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />

@@ -1,17 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import Button from '../../components/shared/button';
-import Input from '../../components/shared/input';
+import { usePathname, useRouter } from 'next/navigation';
+import Button from '../../../components/shared/button';
+import Input from '../../../components/shared/input';
+import { authClient } from '../../../lib/auth-client';
 
 export default function AccountPage() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: sessionData, isPending } = authClient.useSession();
 
   const [profile, setProfile] = useState({
-    name: 'Soumya Mishra',
-    email: 'soumya@example.com',
+    name: '',
+    email: '',
     phone: '+1 (555) 019-2834',
     address: '142 Kyoto Atelier Way',
     city: 'Kyoto',
@@ -21,16 +24,45 @@ export default function AccountPage() {
 
   const [isEditing, setEditing] = useState(false);
 
-  const accountTabs = [
-    { name: 'PROFILE', href: '/account' },
-    { name: 'ORDERS', href: '/account/orders' },
-    { name: 'WISHLIST', href: '/account/wishlist' },
-  ];
+  useEffect(() => {
+    if (sessionData?.user) {
+      setProfile((prev) => ({
+        ...prev,
+        name: sessionData.user.name || '',
+        email: sessionData.user.email || '',
+      }));
+    }
+  }, [sessionData]);
+
+  const handleSignOut = async () => {
+    await authClient.signOut();
+    router.push('/login');
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     setEditing(false);
   };
+
+  if (isPending) {
+    return (
+      <main className="pt-32 pb-section-gap max-w-[1440px] mx-auto px-6 md:px-margin-desktop text-center select-none">
+        <h1 className="font-label-caps text-label-caps text-on-surface-variant animate-pulse">
+          LOADING PROFILE...
+        </h1>
+      </main>
+    );
+  }
+
+  if (!sessionData) {
+    return null;
+  }
+
+  const accountTabs = [
+    { name: 'PROFILE', href: '/account' },
+    { name: 'ORDERS', href: '/account/orders' },
+    { name: 'WISHLIST', href: '/account/wishlist' },
+  ];
 
   return (
     <main className="pt-32 pb-section-gap max-w-[1440px] mx-auto px-6 md:px-margin-desktop select-none">
@@ -63,14 +95,22 @@ export default function AccountPage() {
         <div className="md:col-span-8 bg-surface-container-low p-8 border border-outline-variant/30 space-y-6">
           <div className="flex justify-between items-baseline border-b border-outline-variant/20 pb-4">
             <h2 className="font-label-caps text-label-caps text-primary">PERSONAL PROFILE</h2>
-            {!isEditing && (
+            <div className="flex gap-4">
+              {!isEditing && (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="font-label-caps text-[10px] text-on-surface-variant hover:text-primary underline cursor-pointer"
+                >
+                  EDIT DETAILS
+                </button>
+              )}
               <button
-                onClick={() => setEditing(true)}
-                className="font-label-caps text-[10px] text-on-surface-variant hover:text-primary underline cursor-pointer"
+                onClick={handleSignOut}
+                className="font-label-caps text-[10px] text-error hover:opacity-85 underline cursor-pointer"
               >
-                EDIT DETAILS
+                SIGN OUT
               </button>
-            )}
+            </div>
           </div>
 
           {isEditing ? (
@@ -90,6 +130,7 @@ export default function AccountPage() {
                   value={profile.email}
                   onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                   required
+                  disabled
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

@@ -32,8 +32,8 @@ export default function Header() {
     { name: 'About', href: '/about' },
   ];
 
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const totalItems = cart.reduce((sum, item) => sum + (item?.quantity || 0), 0);
+  const cartTotal = cart.reduce((sum, item) => sum + (item?.product?.price || 0) * (item?.quantity || 0), 0);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,7 +197,7 @@ export default function Header() {
                     </button>
                   </div>
                 ) : (
-                  cart.map((item, idx) => (
+                  cart.filter(item => item && item.product).map((item, idx) => (
                     <div key={`${item.product.id}-${item.selectedSize}`} className="py-6 flex gap-6 first:pt-0 last:pb-0">
                       {/* Product Thumbnail */}
                       <Link href={`/shop/${item.product.slug}`} onClick={() => setCartOpen(false)} className="w-24 aspect-[3/4] bg-surface-container overflow-hidden shrink-0">

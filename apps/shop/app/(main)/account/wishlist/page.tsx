@@ -1,16 +1,33 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Heart } from 'lucide-react';
-import { useStore } from '../../../lib/context/store-context';
-import ProductCard from '../../../components/product/product-card';
-import Button from '../../../components/shared/button';
+import { useStore } from '../../../../lib/context/store-context';
+import ProductCard from '../../../../components/product/product-card';
+import Button from '../../../../components/shared/button';
+import { authClient } from '../../../../lib/auth-client';
 
 export default function AccountWishlistPage() {
   const pathname = usePathname();
+  const router = useRouter();
   const { wishlist } = useStore();
+  const { data: sessionData, isPending } = authClient.useSession();
+
+  if (isPending) {
+    return (
+      <main className="pt-32 pb-section-gap max-w-[1440px] mx-auto px-6 md:px-margin-desktop text-center select-none">
+        <h1 className="font-label-caps text-label-caps text-on-surface-variant animate-pulse">
+          LOADING PROFILE...
+        </h1>
+      </main>
+    );
+  }
+
+  if (!sessionData) {
+    return null;
+  }
 
   const accountTabs = [
     { name: 'PROFILE', href: '/account' },

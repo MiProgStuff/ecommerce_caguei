@@ -11,8 +11,8 @@ export default function CartPage() {
   const router = useRouter();
   const { cart, updateCartQuantity, removeFromCart, clearCart } = useStore();
 
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const totalItems = cart.reduce((sum, item) => sum + (item?.quantity || 0), 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item?.product?.price || 0) * (item?.quantity || 0), 0);
   const currency = cart.length > 0 ? cart[0].product.currency : '$';
 
   // Free shipping above $500 or €500
@@ -52,7 +52,7 @@ export default function CartPage() {
             
             {/* Left Column: Items */}
             <div className="lg:col-span-8 divide-y divide-outline-variant/30">
-              {cart.map((item) => (
+              {cart.filter(item => item && item.product).map((item) => (
                 <div
                   key={`${item.product.id}-${item.selectedSize}`}
                   className="py-8 flex flex-col sm:flex-row gap-6 first:pt-0"
