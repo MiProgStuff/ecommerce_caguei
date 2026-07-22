@@ -12,6 +12,7 @@ import wishlistRoutes from './modules/wishlist/wishlist.routes';
 import paymentsRoutes from './modules/payments/payments.routes';
 import productsRoutes from './modules/products/products.routes';
 import ordersRoutes from './modules/orders/orders.routes';
+import analyticsRoutes from './modules/analytics/analytics.routes';
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // ─── 5. Health Check ─────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {

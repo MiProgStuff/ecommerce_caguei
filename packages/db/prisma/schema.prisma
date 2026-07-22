@@ -6,16 +6,38 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum SystemRole {
+  SUPER_ADMIN
+  ADMIN
+  INVENTORY_MANAGER
+  MARKETING_MANAGER
+  SUPPORT_AGENT
+  CUSTOMER
+}
+
+enum PermissionAction {
+  READ
+  CREATE
+  UPDATE
+  DELETE
+  EXPORT
+  EXECUTE
+}
+
 model User {
-  id            String    @id @default(uuid())
+  id            String      @id @default(uuid())
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String      @unique
+  emailVerified Boolean     @default(false)
   image         String?
   phoneNumber   String?
   address       String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          SystemRole  @default(CUSTOMER)
+  roleId        String?
+  customRole    Role?       @relation(fields: [roleId], references: [id])
+  auditLogs     AuditLog[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   sessions      Session[]
   accounts      Account[]
   addresses     Address[]
@@ -24,6 +46,53 @@ model User {
   orders        Order[]
 
   @@map("user")
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  description String?
+  permissions RolePermission[]
+  users       User[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("role")
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  resource    String
+  action      PermissionAction
+  description String?
+  roles       RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permission")
+}
+
+model RolePermission {
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permission")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action     String
+  resource   String
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@map("audit_log")
 }
 
 model Session {

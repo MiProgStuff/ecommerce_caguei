@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@caguei/db": "workspace:*",
+    "@caguei/validations": "workspace:*",
     "better-auth": "^1.6.23",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",

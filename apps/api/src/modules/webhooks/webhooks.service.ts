@@ -29,7 +29,7 @@ export async function processStripeWebhookService(rawBody: any, signature: strin
     }
 
     try {
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         // Idempotency: only update if still PENDING
         const order = await tx.order.findUnique({ where: { id: orderId } });
 
