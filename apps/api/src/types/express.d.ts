@@ -1,14 +1,16 @@
-import { auth } from '../../lib/auth';
+declare namespace Express {
+  interface User {
+    id: string;
+    email: string;
+    name?: string | null;
+    phoneNumber?: string | null;
+    createdAt?: Date;
+    updatedAt?: Date;
+    [key: string]: any;
+  }
 
-type SessionResult = Awaited<ReturnType<typeof auth.api.getSession>>;
-type SessionUser = NonNullable<SessionResult>['user'];
-type SessionData = NonNullable<SessionResult>['session'];
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: SessionUser;
-      session?: SessionData;
-    }
+  interface Request {
+    user?: User;
+    session?: any;
   }
 }
