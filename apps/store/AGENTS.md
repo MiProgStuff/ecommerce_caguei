@@ -28,7 +28,7 @@ Welcome, coding agent. This is the **store** application (customer-facing storef
 | `lib/context/store-context.tsx` | Global cart/wishlist state with DB sync on login |
 | `app/(main)/checkout/page.tsx` | Checkout flow: address picker + Stripe Elements |
 | `app/(main)/account/orders/page.tsx` | Real-time order history from `GET /api/orders` |
-| `app/order-success/page.tsx` | Post-Stripe redirect; clears cart state |
+| `app/(main)/order-success/[id]/page.tsx` | Protected post-Stripe redirect; verifies order ownership & clears cart |
 
 ---
 

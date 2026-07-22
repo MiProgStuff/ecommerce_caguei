@@ -118,7 +118,7 @@ Creates a Stripe PaymentIntent server-side. The **amount is calculated server-si
     ]
   }
   ```
-- **Response:** `{ "clientSecret": "pi_xxx_secret_xxx" }`
+- **Response:** `{ "clientSecret": "pi_xxx_secret_xxx", "orderId": "order_uuid" }`
 
 ---
 
@@ -167,5 +167,5 @@ Orders are **only created by the Stripe webhook**. The client can only read them
 | `fetchWishlist()` | Get wishlisted products |
 | `addToDbWishlist(productId)` | Add to wishlist |
 | `removeFromDbWishlist(productId)` | Remove from wishlist |
-| `createPaymentIntent(data)` | Create Stripe PaymentIntent; returns `{ clientSecret }` |
+| `createPaymentIntent(data)` | Create Stripe PaymentIntent; returns `{ clientSecret, orderId }` |
 | `fetchOrders()` | Fetch user's order history |

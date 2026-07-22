@@ -84,9 +84,12 @@ sequenceDiagram
 
 ### 1. Central API Backend (`apps/api`)
 - Built on **Express.js** and TypeScript, running on port `4000`.
+- Organized into domain-based modules under `src/modules/` (`users`, `addresses`, `cart`, `wishlist`, `payments`, `products`, `orders`, `webhooks`).
+- Enforces a 3-layer architecture (`.routes.ts`, `.controller.ts`, `.service.ts`) for clean separation of concerns.
+- Reusable `requireAuth` Express middleware (`src/middleware/auth.middleware.ts`) validates BetterAuth sessions and attaches `req.user` & `req.session`.
 - CORS configured to trust `localhost:3000` (store) and `localhost:3001` (admin) with cookie credentials.
-- **Stripe webhook** endpoint uses `express.raw()` middleware (must come before `express.json()`) for signature verification.
-- All order creation is performed exclusively by the Stripe webhook — never from the client.
+- **Stripe webhook** endpoint uses `express.raw()` middleware registered before `express.json()` for signature verification.
+- Order creation is DB-first (PENDING status created before PaymentIntent confirmation, updated to PAID by webhook).
 
 ### 2. Stripe Security Model
 - The client receives only a `clientSecret` to initialize the Stripe PaymentElement.
