@@ -8,11 +8,6 @@ export async function uploadImageHandler(req: Request, res: Response) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Role check: Only admin is allowed to upload catalog images
-    if (req.user?.role !== 'SUPER_ADMIN' && req.user?.role !== 'ADMIN') {
-      return res.status(403).json({ error: 'Forbidden: Admin access required' });
-    }
-
     const file = req.file;
     const fileExtension = file.originalname.split('.').pop() || 'jpg';
     const uniqueFilename = `${crypto.randomUUID()}.${fileExtension}`;
