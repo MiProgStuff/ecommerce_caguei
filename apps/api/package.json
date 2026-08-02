@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon --watch src --watch lib -e ts --exec ts-node src/server.ts",
+    "dev": "dotenv -e ../../.env -- nodemon --watch src --watch lib -e ts --exec ts-node src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "dotenv -e ../../.env -- node dist/server.js"
   },
   "dependencies": {
     "@caguei/db": "workspace:*",
