@@ -6,9 +6,9 @@ services:
     container_name: caguei-db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: caguei_db
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-caguei_db}
     ports:
       - "5432:5432"
     volumes:
@@ -26,11 +26,15 @@ services:
       - "4000:4000"
     environment:
       PORT: 4000
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/caguei_db
-      BETTER_AUTH_SECRET: caguei_auth_secret_placeholder_keys_for_development_123456
-      BETTER_AUTH_URL: http://localhost:4000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/caguei_db}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-caguei_auth_secret_placeholder_keys_for_development_123456}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:4000}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio}
+      MINIO_PORT: ${MINIO_PORT:-9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadminpassword}
 
   store:
     build:
@@ -45,11 +49,11 @@ services:
       - "3000:3000"
     environment:
       PORT: 3000
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/caguei_db
-      BETTER_AUTH_SECRET: caguei_auth_secret_placeholder_keys_for_development_123456
-      BETTER_AUTH_URL: http://localhost:3000
-      NEXT_PUBLIC_BASE_URL: http://localhost:3000
-      NEXT_PUBLIC_API_URL: http://localhost:4000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/caguei_db}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-caguei_auth_secret_placeholder_keys_for_development_123456}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-http://localhost:3000}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-pk_test_placeholder}
 
   admin:
@@ -65,11 +69,11 @@ services:
       - "3001:3001"
     environment:
       PORT: 3001
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/caguei_db
-      BETTER_AUTH_SECRET: caguei_auth_secret_placeholder_keys_for_development_123456
-      BETTER_AUTH_URL: http://localhost:3001
-      NEXT_PUBLIC_BASE_URL: http://localhost:3001
-      NEXT_PUBLIC_API_URL: http://localhost:4000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/caguei_db}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-caguei_auth_secret_placeholder_keys_for_development_123456}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-http://localhost:3001}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
 
   minio:
     image: minio/minio:latest
@@ -79,8 +83,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadminpassword
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadminpassword}
     command: server /data --console-address ":9001"
     volumes:
       - miniodata:/data
