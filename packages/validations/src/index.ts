@@ -16,6 +16,7 @@ export const productSchema = z.object({
   fabricCare: z.string().default('Machine wash cold inside out'),
   shipping: z.string().default('Ships within 24 hours in luxury box'),
   sizes: z.array(z.string()).min(1, 'At least one size variant must be selected'),
+  stock: z.number().int().nonnegative('Stock must be a non-negative integer').default(0),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

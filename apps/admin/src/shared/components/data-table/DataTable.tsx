@@ -32,7 +32,7 @@ export function DataTable<T>({
   emptyMessage = 'No records found',
 }: DataTableProps<T>) {
   return (
-    <div className="w-full bg-[#18181B] border border-[#27272A] rounded-[4px] overflow-hidden flex flex-col">
+    <div className="w-full bg-[#18181B] border border-[#27272A] rounded-none overflow-hidden flex flex-col">
       {/* Table Container */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
@@ -56,7 +56,7 @@ export function DataTable<T>({
                 <tr key={idx} className="animate-pulse">
                   {columns.map((_, cIdx) => (
                     <td key={cIdx} className="px-4 py-3.5">
-                      <div className="h-4 bg-[#27272A] rounded-[2px] w-3/4" />
+                      <div className="h-4 bg-[#27272A] rounded-none w-3/4" />
                     </td>
                   ))}
                 </tr>
@@ -103,14 +103,14 @@ export function DataTable<T>({
             <button
               onClick={() => onPageChange(page - 1)}
               disabled={page <= 1 || isLoading}
-              className="p-1 rounded-[4px] border border-[#27272A] text-[#A1A1AA] hover:text-white hover:bg-[#18181B] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="p-1 rounded-none border border-[#27272A] text-[#A1A1AA] hover:text-white hover:bg-[#18181B] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages || isLoading}
-              className="p-1 rounded-[4px] border border-[#27272A] text-[#A1A1AA] hover:text-white hover:bg-[#18181B] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="p-1 rounded-none border border-[#27272A] text-[#A1A1AA] hover:text-white hover:bg-[#18181B] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

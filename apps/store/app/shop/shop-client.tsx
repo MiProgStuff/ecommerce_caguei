@@ -48,7 +48,7 @@ export default function ShopClient({ initialFilters }: ShopClientProps) {
 
   // Filter & Sort Logic
   const filteredProducts = useMemo(() => {
-    let result = [...products];
+    let result = Array.isArray(products) ? [...products] : [];
 
     // Filter by Category
     if (selectedCategory && selectedCategory !== 'All') {

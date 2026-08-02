@@ -6,6 +6,7 @@ import { fetcher } from '@/shared/lib/api-client';
 import { DataTable, Column } from '@/shared/components/data-table/DataTable';
 import { StatusBadge } from '@/shared/components/feedback/StatusBadge';
 import { Search, Filter, Eye, CheckCircle2 } from 'lucide-react';
+import Link from 'next/link';
 
 interface Order {
   id: string;
@@ -100,13 +101,13 @@ export function OrdersPage() {
       header: 'ACTIONS',
       cell: (item) => (
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => alert(`View details for Order #${item.id.slice(0, 8)}`)}
-            className="p-1 text-[#A1A1AA] hover:text-white hover:bg-[#141313] rounded-[4px] transition-colors"
+          <Link
+            href={`/orders/${item.id}`}
+            className="p-1 text-[#A1A1AA] hover:text-white hover:bg-[#141313] rounded-none transition-colors border border-[#27272A]"
             title="View Order Details"
           >
             <Eye className="w-3.5 h-3.5" />
-          </button>
+          </Link>
         </div>
       ),
     },
@@ -115,7 +116,7 @@ export function OrdersPage() {
   return (
     <div className="space-y-4">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[#18181B] border border-[#27272A] rounded-[4px]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[#18181B] border border-[#27272A] rounded-none">
         <div>
           <h2 className="text-base font-bold text-white tracking-tight">
             Orders Management & Dispatch Queue
@@ -135,7 +136,7 @@ export function OrdersPage() {
               setStatusFilter(st);
               setPage(1);
             }}
-            className={`px-3 py-1.5 rounded-[4px] font-mono text-xs font-semibold transition-colors border ${
+            className={`px-3 py-1.5 rounded-none font-mono text-xs font-semibold transition-colors border ${
               statusFilter === st
                 ? 'bg-white text-black border-white'
                 : 'bg-[#18181B] text-[#A1A1AA] border-[#27272A] hover:text-white'

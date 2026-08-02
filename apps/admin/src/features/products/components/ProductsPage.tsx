@@ -6,6 +6,7 @@ import { fetcher } from '@/shared/lib/api-client';
 import { DataTable, Column } from '@/shared/components/data-table/DataTable';
 import { Search, Plus, Trash2, Edit3, Filter } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface Product {
   id: string;
@@ -18,6 +19,7 @@ interface Product {
   material: string;
   images: string[];
   sizes: string[];
+  stock: number;
   createdAt: string;
 }
 
@@ -118,6 +120,14 @@ export function ProductsPage() {
       ),
     },
     {
+      header: 'STOCK',
+      cell: (item) => (
+        <span className={`font-mono text-xs font-bold ${item.stock === 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+          {item.stock || 0} unit{item.stock !== 1 ? 's' : ''}
+        </span>
+      ),
+    },
+    {
       header: 'PRICE',
       cell: (item) => (
         <span className="font-mono text-xs font-bold text-white">
@@ -129,9 +139,16 @@ export function ProductsPage() {
       header: 'ACTIONS',
       cell: (item) => (
         <div className="flex items-center gap-2">
+          <Link
+            href={`/products/${item.id}`}
+            className="p-1 text-[#A1A1AA] hover:text-white hover:bg-[#141313] rounded-none transition-colors border border-[#27272A]"
+            title="Edit Product"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+          </Link>
           <button
             onClick={() => handleDelete(item.id, item.name)}
-            className="p-1 text-[#A1A1AA] hover:text-rose-400 hover:bg-[#141313] rounded-[4px] transition-colors"
+            className="p-1 text-[#A1A1AA] hover:text-rose-400 hover:bg-[#141313] rounded-none transition-colors border border-[#27272A]"
             title="Delete Product"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -144,7 +161,7 @@ export function ProductsPage() {
   return (
     <div className="space-y-4">
       {/* Header Bar & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[#18181B] border border-[#27272A] rounded-[4px]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[#18181B] border border-[#27272A] rounded-none">
         <div>
           <h2 className="text-base font-bold text-white tracking-tight">
             Products Inventory & Catalog
@@ -153,13 +170,13 @@ export function ProductsPage() {
             Manage luxury streetwear collections, prices, and variants
           </p>
         </div>
-        <button
-          onClick={() => alert('Product creation form drawer ready in next step')}
-          className="px-3 py-1.5 bg-white text-black hover:bg-zinc-200 text-xs font-semibold rounded-[4px] transition-colors flex items-center gap-1.5 shrink-0"
+        <Link
+          href="/products/new"
+          className="px-3 py-1.5 bg-white text-black hover:bg-zinc-200 text-xs font-semibold rounded-none transition-colors flex items-center gap-1.5 shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>New Product</span>
-        </button>
+        </Link>
       </div>
 
       {/* Filter & Search Toolbar */}
@@ -174,7 +191,7 @@ export function ProductsPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full h-8 pl-8 pr-3 bg-[#18181B] border border-[#27272A] rounded-[4px] text-xs text-white placeholder-[#A1A1AA] focus:outline-none focus:border-[#3B82F6]"
+            className="w-full h-8 pl-8 pr-3 bg-[#18181B] border border-[#27272A] rounded-none text-xs text-white placeholder-[#A1A1AA] focus:outline-none focus:border-[#3B82F6]"
           />
         </div>
 
@@ -186,7 +203,7 @@ export function ProductsPage() {
               setSelectedCategory(e.target.value);
               setPage(1);
             }}
-            className="h-8 px-2.5 bg-[#18181B] border border-[#27272A] rounded-[4px] font-mono text-xs text-white focus:outline-none focus:border-[#3B82F6]"
+            className="h-8 px-2.5 bg-[#18181B] border border-[#27272A] rounded-none font-mono text-xs text-white focus:outline-none focus:border-[#3B82F6]"
           >
             <option value="">All Categories</option>
             <option value="hoodies">Hoodies</option>

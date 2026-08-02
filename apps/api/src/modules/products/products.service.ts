@@ -71,6 +71,7 @@ export async function createProductService(data: ProductInput) {
       fabricCare: data.fabricCare,
       shipping: data.shipping,
       sizes: data.sizes,
+      stock: data.stock,
     },
   });
 }

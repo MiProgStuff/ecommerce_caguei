@@ -71,5 +71,20 @@ services:
       NEXT_PUBLIC_BASE_URL: http://localhost:3001
       NEXT_PUBLIC_API_URL: http://localhost:4000
 
+  minio:
+    image: minio/minio:latest
+    container_name: caguei-minio
+    restart: always
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminpassword
+    command: server /data --console-address ":9001"
+    volumes:
+      - miniodata:/data
+
 volumes:
   pgdata:
+  miniodata:

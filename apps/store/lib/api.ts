@@ -321,7 +321,10 @@ export async function fetchProducts(category?: string): Promise<any[]> {
       : `${API_BASE_URL}/api/products`;
     const res = await fetch(url);
     if (!res.ok) return [];
-    return await res.json();
+    const data = await res.json();
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.products)) return data.products;
+    return [];
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];

@@ -14,7 +14,11 @@ export default function Home() {
 
   React.useEffect(() => {
     fetchProducts().then((data) => {
-      setNewArrivals(data.slice(0, 3));
+      if (Array.isArray(data)) {
+        setNewArrivals(data.slice(0, 3));
+      } else if (data && Array.isArray((data as any).products)) {
+        setNewArrivals((data as any).products.slice(0, 3));
+      }
     });
   }, []);
 
