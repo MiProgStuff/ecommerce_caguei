@@ -37,10 +37,4 @@ export default async function ProductDetailsPage(props: PageProps) {
   );
 }
 
-// Generate static params for dynamic routes to optimize compilation and SEO
-export async function generateStaticParams() {
-  const products = await prisma.product.findMany({ select: { slug: true } });
-  return products.map((product) => ({
-    slug: product.slug,
-  }));
-}
+export const dynamic = 'force-dynamic';
