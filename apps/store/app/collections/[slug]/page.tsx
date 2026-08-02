@@ -93,7 +93,7 @@ export default async function CollectionDetailPage(props: PageProps) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-gutter gap-y-unit-xl">
-          {serializedProducts.map((product) => (
+          {serializedProducts.map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -103,11 +103,4 @@ export default async function CollectionDetailPage(props: PageProps) {
 }
 
 
-export async function generateStaticParams() {
-  return [
-    { slug: 'core-collection' },
-    { slug: 'lookbook-chapter-01' },
-    { slug: 'essentials' },
-    { slug: 'archive' },
-  ];
-}
+export const dynamic = 'force-dynamic';
