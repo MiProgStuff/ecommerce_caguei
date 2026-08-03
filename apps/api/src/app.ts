@@ -27,12 +27,25 @@ app.use((req, _res, next) => {
 // cagueistudio.com production domain and any subdomain of it (admin, api, etc.)
 // once deployed — prepared now, not yet wired to real DNS/SSL.
 const PRODUCTION_DOMAIN = 'cagueistudio.com';
+// RFC1918 private ranges — lets a browser on another machine on the same LAN
+// (e.g. reaching this box over SSH) hit the dev servers by IP instead of
+// localhost, which wouldn't resolve to this host from that machine.
+const isPrivateLanHost = (hostname: string) =>
+  /^10\./.test(hostname) ||
+  /^192\.168\./.test(hostname) ||
+  /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+
 const isAllowedOrigin = (origin: string) => {
   if (origin === 'http://localhost:3000' || origin === 'http://localhost:3001') return true;
   try {
-    const { protocol, hostname } = new URL(origin);
-    if (protocol !== 'https:') return false;
-    return hostname === PRODUCTION_DOMAIN || hostname.endsWith(`.${PRODUCTION_DOMAIN}`);
+    const { protocol, hostname, port } = new URL(origin);
+    if (protocol === 'https:') {
+      return hostname === PRODUCTION_DOMAIN || hostname.endsWith(`.${PRODUCTION_DOMAIN}`);
+    }
+    if (protocol === 'http:' && (port === '3000' || port === '3001') && isPrivateLanHost(hostname)) {
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }

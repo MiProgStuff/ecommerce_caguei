@@ -39,6 +39,8 @@ export const auth = betterAuth({
   trustedOrigins: [
     'http://localhost:3000', // store app default port
     'http://localhost:3001', // admin app default port
+    'http://192.168.1.100:3000', // dev: browser on another LAN machine via SSH — update if this box's IP changes
+    'http://192.168.1.100:3001',
     'https://cagueistudio.com', // production store domain (prepared, not deployed yet)
     'https://*.cagueistudio.com', // any production subdomain (admin., api., etc.)
   ],

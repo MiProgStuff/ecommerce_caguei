@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Dev: allows the HMR/dev-resource requests from a browser on another LAN
+  // machine (e.g. accessing this box's IP over SSH). Update if the IP changes.
+  allowedDevOrigins: ['192.168.1.100'],
   images: {
     remotePatterns: [
       {
