@@ -4,6 +4,7 @@ import './globals.css';
 import { GlobalStoreProvider } from '../lib/context/store-context';
 import Header from '../components/layout/header';
 import Footer from '../components/layout/footer';
+import ScrollToTop from '../components/shared/scroll-to-top';
 
 const anton = Anton({
   subsets: ['latin'],
@@ -60,6 +61,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-on-background font-body-md overflow-x-hidden">
         <GlobalStoreProvider>
+          <ScrollToTop />
           <Header />
           <div className="flex flex-col flex-1">
             {children}
