@@ -184,7 +184,7 @@ async function main() {
   // This only takes effect once that account has actually signed in at least
   // once via apps/admin's email-OTP login (a User row must already exist).
   // Re-running the seed after they sign up will link it.
-  const superAdminEmail = 'carlopes24@gmail.com';
+  const superAdminEmail = 'carlosmfl@outlook.pt';
   const superAdminUser = await prisma.user.findUnique({
     where: { email: superAdminEmail },
   });
