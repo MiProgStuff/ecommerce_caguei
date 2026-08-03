@@ -17,6 +17,12 @@ import uploadRoutes from './modules/upload/upload.routes';
 
 const app = express();
 
+// TEMP DEBUG LOGGER — remove after diagnosing admin OTP login issue.
+app.use((req, _res, next) => {
+  console.log(`[DEBUG] ${req.method} ${req.originalUrl} origin=${req.headers.origin ?? 'none'}`);
+  next();
+});
+
 // Configure CORS to trust local frontend client cookies, plus the
 // cagueistudio.com production domain and any subdomain of it (admin, api, etc.)
 // once deployed — prepared now, not yet wired to real DNS/SSL.
