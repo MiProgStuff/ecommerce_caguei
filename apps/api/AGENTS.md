@@ -97,8 +97,8 @@ When adding or modifying API features:
 
 ### 3. CORS & Origin Validation
 - When adding new frontend clients, update both:
-  1. The `cors` origin array in [src/app.ts](file:///home/soumya/Desktop/Code/Projects/caguei-ecommerce/apps/api/src/app.ts).
-  2. The `trustedOrigins` array in [lib/auth.ts](file:///home/soumya/Desktop/Code/Projects/caguei-ecommerce/apps/api/lib/auth.ts).
+  1. The `cors` origin array in `src/app.ts`.
+  2. The `trustedOrigins` array in `lib/auth.ts`.
 
 ### 4. Environment Variables
 | Variable | Purpose |

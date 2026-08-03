@@ -26,4 +26,4 @@ When adding new models or changing existing columns in `prisma/schema.prisma`:
 
 ### 2. Client Pool Constraints
 - Always import the default database wrapper `prisma` from `@caguei/db`. Avoid creating redundant `PrismaClient` instances inside consumer apps, as doing so will initiate extra connection pools and cause connection leaks.
-- In Prisma 7, connection strings must be passed via the `Pool` parameter inside [src/index.ts](file:///home/soumya/Desktop/Code/Projects/caguei-ecommerce/packages/db/src/index.ts), not as parameters inside the prisma configuration file.
+- In Prisma 7, connection strings must be passed via the `Pool` parameter inside `src/index.ts`, not as parameters inside the prisma configuration file.

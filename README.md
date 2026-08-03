@@ -227,6 +227,6 @@ docker compose down -v
 ## 📖 Additional Reference Docs
 
 For deep technical details, check the `./docs` directory:
-* **[Architecture Guide](file:///home/soumya/Desktop/Code/Projects/caguei-ecommerce/docs/architecture.md):** High-level component patterns and secure Stripe payment data flows.
-* **[API Reference](file:///home/soumya/Desktop/Code/Projects/caguei-ecommerce/docs/api-reference.md):** Complete catalog of Express API endpoints, cart sync operations, and webhook behaviors.
-* **[Design System](file:///home/soumya/Desktop/Code/Projects/caguei-ecommerce/docs/design-system.md):** Typography, color codes, spacing, and strict `0px` border-radius constraints.
+* **[Architecture Guide](./docs/architecture.md):** High-level component patterns and secure Stripe payment data flows.
+* **[API Reference](./docs/api-reference.md):** Complete catalog of Express API endpoints, cart sync operations, and webhook behaviors.
+* **[Design System](./docs/design-system.md):** Typography, color codes, spacing, and strict `0px` border-radius constraints.

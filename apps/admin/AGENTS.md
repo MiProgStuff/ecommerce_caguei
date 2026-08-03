@@ -22,7 +22,7 @@ Welcome, coding agent. This is the **admin** application (administrative panel) 
 ## Core Guidelines & Constraints
 
 ### 1. Centralized API References
-- Never import `authClient` from `lib/auth-client` directly into pages. Always use the wrapper functions and hook exports (`sendVerificationOtp`, `signInWithOtp`, `signOutUser`, `useSession`, `fetchUsers`, `updateUserRole`) in [lib/api.ts](file:///home/soumya/Desktop/Code/Projects/caguei-ecommerce/apps/admin/lib/api.ts).
+- Never import `authClient` from `lib/auth-client` directly into pages. Always use the wrapper functions and hook exports (`sendVerificationOtp`, `signInWithOtp`, `signOutUser`, `useSession`, `fetchUsers`, `updateUserRole`) in `lib/api.ts`.
 
 ### 2. Styling Guardrails
 - The admin panel stays a practical dark "obsidian" dashboard (`apps/admin/app/globals.css`, `--background: #141313`) — it does NOT adopt the storefront's cream/olive vintage palette. The brand comes through via the maroon accent (`--color-obsidian-accent`, `#C23B3B`) and the logo only.
