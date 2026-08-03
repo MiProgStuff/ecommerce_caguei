@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { emailOTP } from 'better-auth/plugins';
 import { prisma } from '@caguei/db';
+import { sendOtpEmail } from './email';
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -25,13 +26,8 @@ export const auth = betterAuth({
   },
   plugins: [
     emailOTP({
-      async sendVerificationOTP({ email, otp, type }) {
-        console.log(`\n========================================`);
-        console.log(`[STORE AUTH DEV LOGGER]`);
-        console.log(`Type: ${type.toUpperCase()}`);
-        console.log(`To: ${email}`);
-        console.log(`OTP Code: ${otp}`);
-        console.log(`========================================\n`);
+      async sendVerificationOTP({ email, otp }) {
+        await sendOtpEmail({ to: email, otp, appName: 'caguei' });
       },
     }),
   ],

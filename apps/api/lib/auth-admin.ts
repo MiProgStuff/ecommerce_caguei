@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { emailOTP } from 'better-auth/plugins';
 import { prisma } from '@caguei/db';
+import { sendOtpEmail } from './email';
 
 // Separate better-auth instance for the admin panel, mounted at its own
 // basePath with its own cookie name (see advanced.cookiePrefix below) so an
@@ -30,13 +31,8 @@ export const adminAuth = betterAuth({
   },
   plugins: [
     emailOTP({
-      async sendVerificationOTP({ email, otp, type }) {
-        console.log(`\n========================================`);
-        console.log(`[ADMIN AUTH DEV LOGGER]`);
-        console.log(`Type: ${type.toUpperCase()}`);
-        console.log(`To: ${email}`);
-        console.log(`OTP Code: ${otp}`);
-        console.log(`========================================\n`);
+      async sendVerificationOTP({ email, otp }) {
+        await sendOtpEmail({ to: email, otp, appName: 'caguei Admin' });
       },
     }),
   ],
