@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronDown, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronDown, SlidersHorizontal, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import { fetchProducts } from '../../lib/api';
 import { Product } from '../../lib/products';
 import ProductCard from '../../components/product/product-card';
@@ -328,7 +328,7 @@ export default function ShopClient({ initialFilters }: ShopClientProps) {
           {filteredProducts.length > 0 && (
             <div className="mt-section-gap flex justify-center items-center gap-unit-lg select-none">
               <button className="opacity-30 cursor-not-allowed" aria-label="Previous page">
-                <span className="material-symbols-outlined">arrow_back</span>
+                <ArrowLeft size={20} strokeWidth={1.5} />
               </button>
               <div className="flex gap-unit-md font-label-caps text-label-caps">
                 <span className="text-primary font-bold underline decoration-2 underline-offset-4 cursor-pointer">01</span>
@@ -338,7 +338,7 @@ export default function ShopClient({ initialFilters }: ShopClientProps) {
                 <span className="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">12</span>
               </div>
               <button className="hover:text-primary transition-colors cursor-pointer" aria-label="Next page">
-                <span className="material-symbols-outlined">arrow_forward</span>
+                <ArrowRight size={20} strokeWidth={1.5} />
               </button>
             </div>
           )}
