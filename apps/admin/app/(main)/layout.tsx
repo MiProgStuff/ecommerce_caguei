@@ -18,6 +18,14 @@ export default async function MainLayout({ children }: MainLayoutProps) {
     redirect('/login');
   }
 
+  // Signing in proves email ownership, not admin privilege — only accounts
+  // explicitly promoted to ADMIN/SUPER_ADMIN (by a SUPER_ADMIN, via Users &
+  // Permissions) may reach the dashboard. Everyone else defaults to CUSTOMER.
+  const role = (session.user as any).role;
+  if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+    redirect('/login?error=not_staff');
+  }
+
   return (
     <QueryProvider>
       <div className="flex h-screen w-screen overflow-hidden bg-[#141313] text-[#FFFFFF]">

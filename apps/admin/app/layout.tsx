@@ -12,9 +12,20 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3001';
+
 export const metadata: Metadata = {
-  title: "Caguei Admin Console | Elite Streetwear Administration",
-  description: "High-density administration, product catalog management, and order fulfillment console for Caguei.",
+  metadataBase: new URL(adminUrl),
+  title: "caguei Admin Console",
+  description: "Internal administration console for caguei — product catalog, orders and fulfillment.",
+  icons: {
+    icon: '/icon.png',
+  },
+  // Internal tool behind a superadmin access code — never index it, in dev or prod.
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +38,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} dark h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#141313] text-[#FFFFFF] font-sans selection:bg-[#3B82F6] selection:text-white">
+      <body className="min-h-full flex flex-col bg-[#141313] text-[#FFFFFF] font-sans selection:bg-[#C23B3B] selection:text-white">
         {children}
       </body>
     </html>

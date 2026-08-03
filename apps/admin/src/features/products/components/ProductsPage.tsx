@@ -191,7 +191,7 @@ export function ProductsPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full h-8 pl-8 pr-3 bg-[#18181B] border border-[#27272A] rounded-none text-xs text-white placeholder-[#A1A1AA] focus:outline-none focus:border-[#3B82F6]"
+            className="w-full h-8 pl-8 pr-3 bg-[#18181B] border border-[#27272A] rounded-none text-xs text-white placeholder-[#A1A1AA] focus:outline-none focus:border-[#C23B3B]"
           />
         </div>
 
@@ -203,7 +203,7 @@ export function ProductsPage() {
               setSelectedCategory(e.target.value);
               setPage(1);
             }}
-            className="h-8 px-2.5 bg-[#18181B] border border-[#27272A] rounded-none font-mono text-xs text-white focus:outline-none focus:border-[#3B82F6]"
+            className="h-8 px-2.5 bg-[#18181B] border border-[#27272A] rounded-none font-mono text-xs text-white focus:outline-none focus:border-[#C23B3B]"
           >
             <option value="">All Categories</option>
             <option value="hoodies">Hoodies</option>

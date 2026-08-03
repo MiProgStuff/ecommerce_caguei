@@ -1,5 +1,7 @@
 import { authClient } from './auth-client';
 
+// NOTE: NEXT_PUBLIC_API_URL must be a real routable host — never
+// "http://0.0.0.0:PORT", which the browser can't actually connect to.
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export const API_ENDPOINTS = {
@@ -68,56 +70,37 @@ export function useSession() {
   return authClient.useSession();
 }
 
-// Address Management API Wrappers
-export async function fetchUserAddresses(): Promise<Address[]> {
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+}
+
+export async function fetchUsers(): Promise<AdminUser[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/addresses`, {
-      credentials: 'include',
-    });
+    const res = await fetch(`${API_BASE_URL}/api/users`, { credentials: 'include' });
     if (!res.ok) return [];
-    return await res.json();
+    const data = await res.json();
+    return data.users ?? [];
   } catch (error) {
-    console.error('Error fetching user addresses:', error);
+    console.error('Error fetching users:', error);
     return [];
   }
 }
 
-export async function createUserAddress(addressData: {
-  street: string;
-  city: string;
-  state?: string;
-  postalCode?: string;
-  country: string;
-  label: string;
-}): Promise<Address | null> {
+export async function updateUserRole(userId: string, role: 'ADMIN' | 'CUSTOMER'): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/addresses`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(addressData),
+    const res = await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role }),
       credentials: 'include',
     });
-    if (!res.ok) return null;
-    return await res.json();
+    return res.ok;
   } catch (error) {
-    console.error('Error creating address:', error);
-    return null;
-  }
-}
-
-export async function deleteUserAddress(id: string): Promise<boolean> {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/addresses/${id}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-    if (!res.ok) return false;
-    const data = await res.json();
-    return !!data.success;
-  } catch (error) {
-    console.error('Error deleting address:', error);
+    console.error('Error updating user role:', error);
     return false;
   }
 }

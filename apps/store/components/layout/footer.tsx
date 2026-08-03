@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 
 export default function Footer() {
@@ -23,11 +24,11 @@ export default function Footer() {
         
         {/* Brand info */}
         <div className="md:col-span-4 mb-unit-lg md:mb-0 space-y-6">
-          <Link href="/" className="font-headline-md text-headline-md text-primary font-bold tracking-tighter">
-            CAGUEI
+          <Link href="/">
+            <Image src="/brand/logo-wordmark.png" alt="caguei" width={130} height={43} className="h-8 w-auto" />
           </Link>
           <p className="font-body-md text-body-md text-on-surface-variant max-w-xs leading-relaxed">
-            Premium European streetwear anchored in the principles of Swiss precision and Japanese minimalism.
+            Streetwear vintage/collegiate feito para durar — bordô, verde-oliva e cru, sem meias tintas.
           </p>
           <div className="flex space-x-6 font-label-caps text-[10px] text-on-surface-variant">
             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Instagram</a>
@@ -95,7 +96,7 @@ export default function Footer() {
 
         {/* Legal Bottom */}
         <div className="col-span-12 border-t border-outline-variant/30 mt-unit-xl pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="font-label-caps text-[10px] text-on-surface-variant">© 2024 CAGUEI. ALL RIGHTS RESERVED.</p>
+          <p className="font-label-caps text-[10px] text-on-surface-variant">© 2026 CAGUEI. ALL RIGHTS RESERVED.</p>
           <div className="flex space-x-8">
             <Link className="font-label-caps text-[10px] text-on-surface-variant hover:text-primary transition-colors" href="/help#privacy">PRIVACY POLICY</Link>
             <Link className="font-label-caps text-[10px] text-on-surface-variant hover:text-primary transition-colors" href="/help#terms">TERMS OF SERVICE</Link>

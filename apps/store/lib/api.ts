@@ -1,5 +1,7 @@
 import { authClient } from './auth-client';
 
+// NOTE: NEXT_PUBLIC_API_URL must be a real routable host — never
+// "http://0.0.0.0:PORT", which the browser can't actually connect to.
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export const API_ENDPOINTS = {
@@ -306,7 +308,10 @@ export async function fetchOrders(): Promise<any[]> {
       credentials: 'include',
     });
     if (!res.ok) return [];
-    return await res.json();
+    const data = await res.json();
+    // GET /api/orders always responds { orders: [...] } — see
+    // apps/api/src/modules/orders/orders.controller.ts:getOrdersHandler
+    return Array.isArray(data) ? data : (data.orders ?? []);
   } catch (error) {
     console.error('Error fetching orders:', error);
     return [];

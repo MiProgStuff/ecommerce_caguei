@@ -2,17 +2,18 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { navigationItems } from '@/config/navigation';
 import { useSidebarStore } from '@/shared/store/useSidebarStore';
-import { ChevronLeft, ChevronRight, LogOut, Terminal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { signOutUser, useSession } from '@/lib/api';
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const { isCollapsed, toggleSidebar } = useSidebarStore();
   const { data: session } = useSession();
-  const user = session?.user;
+  const user = session?.user as any;
 
   const handleSignOut = async () => {
     await signOutUser();
@@ -28,8 +29,8 @@ export function AdminSidebar() {
       {/* Brand Header */}
       <div className="flex items-center justify-between h-14 px-4 border-b border-[#27272A]">
         <Link href="/" className="flex items-center gap-2.5 overflow-hidden">
-          <div className="flex items-center justify-center w-7 h-7 bg-white text-black font-bold text-xs rounded-[4px] shrink-0">
-            C
+          <div className="relative flex items-center justify-center w-7 h-7 rounded-[4px] shrink-0 overflow-hidden bg-obsidian-accent-soft">
+            <Image src="/brand/logo-mark.png" alt="" fill className="object-contain p-0.5" />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col leading-none">
@@ -71,11 +72,11 @@ export function AdminSidebar() {
               href={item.href}
               className={`flex items-center gap-3 px-2.5 py-2 text-xs font-medium rounded-[4px] transition-colors ${
                 isActive
-                  ? 'bg-white text-black font-semibold'
+                  ? 'bg-obsidian-accent text-white font-semibold'
                   : 'text-[#A1A1AA] hover:text-white hover:bg-[#18181B]'
               }`}
             >
-              <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-black' : 'text-[#A1A1AA]'}`} />
+              <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-[#A1A1AA]'}`} />
               {!isCollapsed && <span className="truncate">{item.title}</span>}
             </Link>
           );
@@ -95,7 +96,7 @@ export function AdminSidebar() {
                   {user?.name || 'Staff User'}
                 </span>
                 <span className="font-mono text-[10px] text-[#A1A1AA] truncate">
-                  {user?.email || 'admin@caguei.com'}
+                  {user?.email || ''}
                 </span>
               </div>
             </div>

@@ -118,7 +118,7 @@ export function OrderDetailPage({ id }: OrderDetailPageProps) {
             {/* Customer Details */}
             <div className="p-4 bg-[#18181B] border border-[#27272A] rounded-none space-y-3">
               <div className="flex items-center gap-2 border-b border-[#27272A] pb-2 text-white">
-                <User className="w-4 h-4 text-[#3B82F6]" />
+                <User className="w-4 h-4 text-[#C23B3B]" />
                 <h4 className="font-mono text-xs font-bold uppercase tracking-wider">
                   Customer Profile
                 </h4>
@@ -135,7 +135,7 @@ export function OrderDetailPage({ id }: OrderDetailPageProps) {
             {/* Shipping Address */}
             <div className="p-4 bg-[#18181B] border border-[#27272A] rounded-none space-y-3">
               <div className="flex items-center gap-2 border-b border-[#27272A] pb-2 text-white">
-                <MapPin className="w-4 h-4 text-[#3B82F6]" />
+                <MapPin className="w-4 h-4 text-[#C23B3B]" />
                 <h4 className="font-mono text-xs font-bold uppercase tracking-wider">
                   Shipping Destination
                 </h4>
@@ -227,7 +227,7 @@ export function OrderDetailPage({ id }: OrderDetailPageProps) {
           {showFulfillmentForm && (
             <div className="p-4 bg-[#18181B] border border-[#27272A] rounded-none space-y-4">
               <div className="flex items-center gap-2 border-b border-[#27272A] pb-2 text-white">
-                <PackageOpen className="w-4 h-4 text-[#3B82F6]" />
+                <PackageOpen className="w-4 h-4 text-[#C23B3B]" />
                 <h4 className="font-mono text-xs font-bold uppercase tracking-wider">
                   Dispatch Shipment
                 </h4>
@@ -238,7 +238,7 @@ export function OrderDetailPage({ id }: OrderDetailPageProps) {
                   <label className="block text-[#A1A1AA] uppercase text-[10px]">Carrier</label>
                   <select
                     {...register('carrier')}
-                    className="w-full h-8 px-2 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#3B82F6]"
+                    className="w-full h-8 px-2 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B]"
                   >
                     <option value="DHL Express">DHL Express</option>
                     <option value="FedEx Premium">FedEx Premium</option>
@@ -253,7 +253,7 @@ export function OrderDetailPage({ id }: OrderDetailPageProps) {
                     type="text"
                     {...register('trackingCode')}
                     placeholder="e.g. JVGL009988223"
-                    className="w-full h-8 px-2.5 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#3B82F6]"
+                    className="w-full h-8 px-2.5 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B]"
                   />
                   {errors.trackingCode && (
                     <span className="text-rose-400 text-[10px]">{errors.trackingCode.message}</span>

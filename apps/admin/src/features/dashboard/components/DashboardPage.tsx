@@ -90,7 +90,7 @@ export function DashboardPage() {
             System Overview & Operations Dashboard
           </h2>
           <p className="font-mono text-xs text-[#A1A1AA] mt-0.5">
-            Caguei European Streetwear • Real-time telemetry feed
+            caguei vintage/collegiate streetwear • real-time telemetry feed
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -158,7 +158,7 @@ export function DashboardPage() {
           </h3>
           <Link
             href="/orders"
-            className="font-mono text-[11px] text-[#3B82F6] hover:underline"
+            className="font-mono text-[11px] text-[#C23B3B] hover:underline"
           >
             View all orders →
           </Link>

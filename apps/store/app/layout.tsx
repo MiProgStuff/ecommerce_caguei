@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
-import { Bodoni_Moda, Hanken_Grotesk } from 'next/font/google';
+import { Anton, Hanken_Grotesk } from 'next/font/google';
 import './globals.css';
 import { GlobalStoreProvider } from '../lib/context/store-context';
 import Header from '../components/layout/header';
 import Footer from '../components/layout/footer';
 
-const bodoniModa = Bodoni_Moda({
+const anton = Anton({
   subsets: ['latin'],
-  variable: '--font-bodoni-moda',
+  weight: '400',
+  variable: '--font-collegiate',
   display: 'swap',
 });
 
@@ -17,9 +18,34 @@ const hankenGrotesk = Hanken_Grotesk({
   display: 'swap',
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const siteName = 'caguei';
+const siteDescription = 'Streetwear vintage/collegiate — bordô, verde-oliva, marinho e cru.';
+
 export const metadata: Metadata = {
-  title: 'CAGUEI | THE NEW STANDARD',
-  description: 'Premium European streetwear anchored in Swiss precision and Japanese minimalism.',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: `${siteName} | streetwear feito para durar`,
+    template: `%s | ${siteName}`,
+  },
+  description: siteDescription,
+  icons: {
+    icon: '/icon.png',
+  },
+  openGraph: {
+    type: 'website',
+    siteName,
+    title: `${siteName} | streetwear feito para durar`,
+    description: siteDescription,
+    url: siteUrl,
+    images: [{ url: '/brand/logo-wordmark.png' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${siteName} | streetwear feito para durar`,
+    description: siteDescription,
+    images: ['/brand/logo-wordmark.png'],
+  },
 };
 
 export default function RootLayout({
@@ -30,7 +56,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${bodoniModa.variable} ${hankenGrotesk.variable} h-full antialiased`}
+      className={`${anton.variable} ${hankenGrotesk.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-on-background font-body-md overflow-x-hidden">
         <GlobalStoreProvider>

@@ -1,7 +1,4 @@
-'use client';
-
 import React from 'react';
-import { useSession } from '@/lib/api';
 
 interface PermissionGuardProps {
   resource: string;
@@ -10,26 +7,11 @@ interface PermissionGuardProps {
   children: React.ReactNode;
 }
 
-export function PermissionGuard({
-  resource,
-  action,
-  fallback = null,
-  children,
-}: PermissionGuardProps) {
-  const { data: session } = useSession();
-  const user = session?.user as any;
-
-  if (!user) return null;
-
-  // Super Admin and Admin bypass permission checks
-  if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
-    return <>{children}</>;
-  }
-
-  const permissions = user.permissions as Array<{ resource: string; action: string }> | undefined;
-  const hasAccess = permissions?.some(
-    (p) => p.resource === resource && p.action === action
-  );
-
-  return hasAccess ? <>{children}</> : <>{fallback}</>;
+/**
+ * Admin access is now gated by a single shared superadmin code (see lib/admin-access.ts),
+ * not per-user RBAC — anyone who reaches the dashboard already has full access.
+ * Kept as a no-op passthrough so call sites don't need to change if this is reintroduced later.
+ */
+export function PermissionGuard({ children }: PermissionGuardProps) {
+  return <>{children}</>;
 }

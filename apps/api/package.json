@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e ../../.env -- nodemon --watch src --watch lib -e ts --exec ts-node src/server.ts",
+    "dev": "dotenv -e ../../.env -- nodemon --watch src --watch lib -e ts --exec tsx src/server.ts",
     "build": "tsc",
     "start": "dotenv -e ../../.env -- node dist/server.js"
   },
@@ -24,7 +24,7 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^20",
     "nodemon": "^3.1.4",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.23.4",
     "typescript": "^5"
   }
 }

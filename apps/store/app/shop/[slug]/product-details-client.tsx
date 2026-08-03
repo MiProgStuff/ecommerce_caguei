@@ -63,7 +63,7 @@ export default function ProductDetailsClient({
         {/* Left: Scroll Gallery */}
         <div className="col-span-12 md:col-span-8 flex flex-col gap-gutter select-none">
           {product.images.map((image, idx) => (
-            <div key={idx} className="w-full aspect-[3/4] bg-surface-container overflow-hidden">
+            <div key={idx} className="w-full aspect-[3/4] bg-surface-container overflow-hidden rounded-lg">
               <img
                 src={image}
                 alt={`${product.name} - View ${idx + 1}`}
@@ -181,19 +181,19 @@ export default function ProductDetailsClient({
       {/* Editorial Campaign Break */}
       <section className="py-section-gap">
         <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-gutter">
-          <div className="col-span-12 md:col-span-7 bg-surface-container-high">
+          <div className="col-span-12 md:col-span-7 bg-surface-container-high rounded-lg overflow-hidden">
             <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAojZQ1Wu_Pa5arF_oGkPVz3hyGU48EmsZqrJzzq85RnClt5qnY21T0p1ktiKP-XTkdaT8l57ee5Bju6ftyF1Btn_xp4UzlHM0oEPShIHa1uavRjZnFU870rLunNWQZX_SRDh31SeKJcCwkkoYs7UQNjpqfKoXUBHFAemKD9vo7A9Tvm13JfTq9WpoNL6ufkwE6_iIg1CY4wCHpR0Zu0ytmTuwExnsH-RLCuuePXFuHBixkmMecPnue"
-              alt="Editorial shadow campaign photo"
-              className="w-full grayscale brightness-90 aspect-video object-cover"
+              src="/brand/photos/close-up.jpg"
+              alt="caguei campaign photo"
+              className="w-full grayscale hover:grayscale-0 transition-all duration-700 aspect-video object-cover"
             />
           </div>
           <div className="col-span-12 md:col-span-4 md:col-start-9 space-y-unit-md mt-6 md:mt-0">
-            <h2 className="font-headline-lg text-3xl md:text-4xl italic leading-tight text-primary">
-              The quiet strength of form.
+            <h2 className="font-headline-lg text-3xl md:text-4xl leading-tight text-primary">
+              Made to be lived in.
             </h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-              Caguei is more than a label. It is a philosophy of reduction. We remove the noise to reveal the essence of the garment—the weight of the wool, the precision of the seam, the silence of the silhouette.
+              caguei is a crest, not a logo. Heavyweight fabrications, embroidered patches, and a palette built from real varsity closets — every piece is made to earn its wear, not just look good on a hanger.
             </p>
           </div>
         </div>

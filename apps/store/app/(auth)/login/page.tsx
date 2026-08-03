@@ -106,6 +106,7 @@ export default function LoginPage() {
           });
         }
         router.push('/account');
+        router.refresh();
       }
     } catch (err: any) {
       setError(err?.message || 'An unexpected error occurred.');

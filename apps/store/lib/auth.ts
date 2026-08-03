@@ -31,5 +31,12 @@ export const auth = betterAuth({
       },
     }),
   ],
-  baseURL: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001',
+  trustedOrigins: [
+    'http://localhost:3000',
+    'https://cagueistudio.com', // production store domain (prepared, not deployed yet)
+    'https://*.cagueistudio.com',
+  ],
+  // NOTE: NEXT_PUBLIC_STORE_URL must be a real routable host — never
+  // "http://0.0.0.0:PORT", which silently breaks session validation.
+  baseURL: process.env.NEXT_PUBLIC_STORE_URL || 'http://localhost:3000',
 });

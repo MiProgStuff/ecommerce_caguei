@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Search, Bell, Shield, Sparkles } from 'lucide-react';
+import { Search, Bell, Shield } from 'lucide-react';
 import { useSession } from '@/lib/api';
 
 export function Header() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const user = session?.user;
+  const user = session?.user as any;
   const [timeString, setTimeString] = useState<string>('');
 
   useEffect(() => {
@@ -68,15 +68,15 @@ export function Header() {
           <input
             type="text"
             placeholder="Search orders, SKUs, customers..."
-            className="w-full h-8 pl-8 pr-3 bg-[#18181B] border border-[#27272A] rounded-[4px] text-xs text-white placeholder-[#A1A1AA] focus:outline-none focus:border-[#3B82F6] transition-colors"
+            className="w-full h-8 pl-8 pr-3 bg-[#18181B] border border-[#27272A] rounded-[4px] text-xs text-white placeholder-[#A1A1AA] focus:outline-none focus:border-[#C23B3B] transition-colors"
           />
         </div>
 
         {/* Role Badge */}
         <div className="flex items-center gap-1.5 px-2 py-1 bg-[#18181B] border border-[#27272A] rounded-[4px]">
-          <Shield className="w-3.5 h-3.5 text-[#3B82F6]" />
+          <Shield className="w-3.5 h-3.5 text-[#C23B3B]" />
           <span className="font-mono text-[10px] font-semibold text-white uppercase tracking-wider">
-            {(user as any)?.role || 'SUPER_ADMIN'}
+            {user?.role || '...'}
           </span>
         </div>
 
@@ -86,7 +86,7 @@ export function Header() {
           title="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#3B82F6]" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#C23B3B]" />
         </button>
       </div>
     </header>

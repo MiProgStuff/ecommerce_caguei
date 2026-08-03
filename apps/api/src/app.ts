@@ -17,10 +17,27 @@ import uploadRoutes from './modules/upload/upload.routes';
 
 const app = express();
 
-// Configure CORS to trust local frontend client cookies
+// Configure CORS to trust local frontend client cookies, plus the
+// cagueistudio.com production domain and any subdomain of it (admin, api, etc.)
+// once deployed — prepared now, not yet wired to real DNS/SSL.
+const PRODUCTION_DOMAIN = 'cagueistudio.com';
+const isAllowedOrigin = (origin: string) => {
+  if (origin === 'http://localhost:3000' || origin === 'http://localhost:3001') return true;
+  try {
+    const { protocol, hostname } = new URL(origin);
+    if (protocol !== 'https:') return false;
+    return hostname === PRODUCTION_DOMAIN || hostname.endsWith(`.${PRODUCTION_DOMAIN}`);
+  } catch {
+    return false;
+  }
+};
+
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: (origin, callback) => {
+      if (!origin || isAllowedOrigin(origin)) return callback(null, true);
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   })
 );

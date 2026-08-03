@@ -303,19 +303,23 @@ export default function CheckoutPage() {
     let finalAddressId = selectedAddressId;
 
     if (!finalAddressId && savedAddresses.length === 0) {
-      // No saved address AND no address selected — prompt guest form logic
-      if (!guestAddress.street || !guestAddress.city) {
+      // Signed in but no saved addresses yet — the visible form is bound to
+      // `newAddress` (see the "no saved addresses" branch below), not `guestAddress`.
+      // `guestAddress` is only ever shown to signed-out visitors.
+      const addressDraft = sessionData?.user ? newAddress : guestAddress;
+
+      if (!addressDraft.street || !addressDraft.city) {
         setAuthError('Please provide a delivery address.');
         return;
       }
-      // Create an address from the guest form
+      // Create an address from the form
       setIntentLoading(true);
       try {
         const created = await createUserAddress({
-          street: guestAddress.street,
-          city: guestAddress.city,
-          postalCode: guestAddress.postalCode,
-          country: guestAddress.country,
+          street: addressDraft.street,
+          city: addressDraft.city,
+          postalCode: addressDraft.postalCode,
+          country: addressDraft.country,
           label: 'home',
         });
         if (!created) throw new Error('Failed to save address.');
@@ -394,23 +398,23 @@ export default function CheckoutPage() {
   const stripeAppearance = {
     theme: 'stripe' as const,
     variables: {
-      colorPrimary: '#0a0a0a',
-      colorBackground: '#fafafa',
-      colorText: '#0a0a0a',
-      colorDanger: '#c62828',
-      fontFamily: '"Inter", system-ui, sans-serif',
-      borderRadius: '0px',
+      colorPrimary: '#7a1f1f',
+      colorBackground: '#fbf7ee',
+      colorText: '#211a15',
+      colorDanger: '#b3261e',
+      fontFamily: '"Hanken Grotesk", system-ui, sans-serif',
+      borderRadius: '8px',
       spacingUnit: '4px',
     },
     rules: {
       '.Input': {
-        border: '1px solid #e0e0e0',
+        border: '1px solid #d8cbae',
         boxShadow: 'none',
         fontSize: '13px',
         padding: '12px 14px',
       },
       '.Input:focus': {
-        border: '1px solid #0a0a0a',
+        border: '1px solid #7a1f1f',
         boxShadow: 'none',
       },
       '.Label': {
@@ -479,7 +483,7 @@ export default function CheckoutPage() {
               {showRegFields && !sessionData && (
                 <div className="space-y-4 p-4 border border-outline-variant/30 bg-surface-container-lowest">
                   <div className="space-y-1">
-                    <h3 className="font-label-caps text-[10px] text-primary">NEW ATELIER ACCOUNT</h3>
+                    <h3 className="font-label-caps text-[10px] text-primary">CREATE ACCOUNT</h3>
                     <p className="text-[11px] text-on-surface-variant">Please provide your details to register.</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

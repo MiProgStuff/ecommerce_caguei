@@ -23,7 +23,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="group relative flex flex-col w-full">
       {/* Product Image Container */}
-      <Link href={`/shop/${product.slug}`} className="relative aspect-[3/4] mb-6 overflow-hidden bg-surface-container select-none cursor-pointer">
+      <Link href={`/shop/${product.slug}`} className="relative aspect-[3/4] mb-6 overflow-hidden bg-surface-container select-none cursor-pointer rounded-lg">
         <img
           src={product.images[0]}
           alt={product.name}
@@ -33,7 +33,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Wishlist Button Overlay */}
         <button
           onClick={handleWishlistToggle}
-          className="absolute top-4 right-4 z-10 w-9 h-9 bg-background/80 hover:bg-background flex items-center justify-center border border-outline-variant/30 hover:border-primary transition-all duration-300 cursor-pointer"
+          className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-background/80 hover:bg-background flex items-center justify-center border border-outline-variant/30 hover:border-primary transition-all duration-300 cursor-pointer"
           aria-label={activeWishlist ? "Remove from wishlist" : "Add to wishlist"}
         >
           <Heart

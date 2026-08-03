@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Search, Heart, User, ShoppingBag, Menu, X, Plus, Minus } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -93,11 +94,15 @@ export default function Header() {
           </button>
 
           {/* Center: Logo */}
-          <Link
-            href="/"
-            className="font-headline-md text-headline-md font-bold tracking-tighter text-primary select-none cursor-pointer"
-          >
-            CAGUEI
+          <Link href="/" className="select-none cursor-pointer" aria-label="caguei — home">
+            <Image
+              src="/brand/logo-wordmark.png"
+              alt="caguei"
+              width={140}
+              height={47}
+              priority
+              className="h-8 w-auto md:h-9"
+            />
           </Link>
 
           {/* Right: Actions */}
@@ -410,7 +415,7 @@ export default function Header() {
               <div className="space-y-12">
                 {/* Header */}
                 <div className="flex justify-between items-center">
-                  <span className="font-headline-md text-headline-md font-bold tracking-tighter text-primary">CAGUEI</span>
+                  <Image src="/brand/logo-wordmark.png" alt="caguei" width={112} height={37} className="h-7 w-auto" />
                   <button
                     onClick={() => setMobileMenuOpen(false)}
                     className="hover:opacity-70 transition-opacity cursor-pointer"
@@ -457,7 +462,7 @@ export default function Header() {
                   <User size={16} /> Account
                 </Link>
                 <div className="text-[10px] font-label-caps text-on-surface-variant/40 pt-4">
-                  © 2024 CAGUEI. ALL RIGHTS RESERVED.
+                  © 2026 caguei. all rights reserved.
                 </div>
               </div>
             </motion.aside>

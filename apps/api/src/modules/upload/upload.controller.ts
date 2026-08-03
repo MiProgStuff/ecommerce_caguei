@@ -22,6 +22,8 @@ export async function uploadImageHandler(req: Request, res: Response) {
     );
 
     // Construct public access URL
+    // NOTE: MINIO_PUBLIC_URL must be a real routable host — never
+    // "http://0.0.0.0:PORT" (this URL ends up in <img> src on the client).
     const publicHost = process.env.MINIO_PUBLIC_URL || 'http://localhost:9000';
     const fileUrl = `${publicHost}/${BUCKET_NAME}/${uniqueFilename}`;
 

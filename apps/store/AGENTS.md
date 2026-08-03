@@ -44,9 +44,11 @@ Welcome, coding agent. This is the **store** application (customer-facing storef
 - Stripe `<Elements>` and `useStripe`/`useElements` must only be used in `'use client'` components.
 - Components using `useSearchParams()` must be wrapped in `<Suspense>` for Next.js static builds.
 
-### 3. Styling Guardrails (0px Corners)
-- Under no circumstances should rounded corners (`rounded-*` or `border-radius`) be introduced. Buttons, image frames, input containers, modals, and list grids must feature exactly `0px` borders.
-- Typography: Use `Bodoni Moda` for editorial page headings and price tags. Use `Hanken Grotesk` for primary UI buttons, navigational list items, and description labels.
+### 3. Styling Guardrails (Vintage/Collegiate)
+- Brand identity is vintage/collegiate streetwear, not minimalist luxury — see `docs/design-system.md` and `branding/` at the repo root for the source assets/palette (maroon `#7A1F1F`, navy, olive, cream).
+- Rounded corners are fine and expected (`rounded-md`/`rounded-lg` on cards, buttons, images) — there is no 0px-radius rule.
+- Typography: Use `Anton` (`font-display-*` utilities) for headlines/price tags. Use `Hanken Grotesk` for buttons, nav items, and body copy.
+- Prefer real photography from `public/brand/photos/` over placeholder/stock image URLs.
 
 ### 4. Environment Variables
 - `NEXT_PUBLIC_API_URL` — base URL for API requests (defaults to `http://localhost:4000`)

@@ -36,3 +36,7 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Raw brand assets (business plan, full-res photography) — not for version control.
+# Web-ready copies used by the apps live in apps/*/public/brand/, which IS tracked.
+/branding

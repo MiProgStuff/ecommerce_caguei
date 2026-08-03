@@ -21,7 +21,7 @@ export default function Input({
       )}
       <input
         id={id}
-        className="w-full bg-transparent border-0 border-b border-outline-variant py-4 px-0 font-label-caps text-label-caps focus:outline-none focus:ring-0 focus:border-primary transition-colors placeholder:text-on-surface-variant/40"
+        className="w-full bg-transparent border-0 border-b-2 border-outline-variant py-4 px-0 font-label-caps text-label-caps focus:outline-none focus:ring-0 focus:border-primary transition-colors placeholder:text-on-surface-variant/40"
         {...props}
       />
       {error && (

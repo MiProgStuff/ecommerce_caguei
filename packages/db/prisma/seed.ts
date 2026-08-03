@@ -180,21 +180,26 @@ async function main() {
   });
   console.log('RolePermissions relations seeded.');
 
-  // Link existing database users to their matching Role
-  const devEmail = 'soumyamishra2099@gmail.com';
-  const devUser = await prisma.user.findUnique({
-    where: { email: devEmail },
+  // Link the platform's SUPER_ADMIN account to the SUPER_ADMIN role.
+  // This only takes effect once that account has actually signed in at least
+  // once via apps/admin's email-OTP login (a User row must already exist).
+  // Re-running the seed after they sign up will link it.
+  const superAdminEmail = 'carlopes24@gmail.com';
+  const superAdminUser = await prisma.user.findUnique({
+    where: { email: superAdminEmail },
   });
 
-  if (devUser) {
+  if (superAdminUser) {
     await prisma.user.update({
-      where: { email: devEmail },
+      where: { email: superAdminEmail },
       data: {
         roleId: dbRoles['SUPER_ADMIN'].id,
         role: 'SUPER_ADMIN', // Keep string role in sync
       },
     });
-    console.log(`Linked dev user ${devEmail} to SUPER_ADMIN Role.`);
+    console.log(`Linked ${superAdminEmail} to SUPER_ADMIN Role.`);
+  } else {
+    console.log(`${superAdminEmail} has not signed in yet — re-run this seed after they do to grant SUPER_ADMIN.`);
   }
 }
 

@@ -58,7 +58,7 @@ export default function CartPage() {
                   className="py-8 flex flex-col sm:flex-row gap-6 first:pt-0"
                 >
                   {/* Image */}
-                  <Link href={`/shop/${item.product.slug}`} className="w-full sm:w-32 aspect-[3/4] bg-surface-container overflow-hidden shrink-0 select-none cursor-pointer">
+                  <Link href={`/shop/${item.product.slug}`} className="w-full sm:w-32 aspect-[3/4] bg-surface-container overflow-hidden shrink-0 select-none cursor-pointer rounded-lg">
                     <img
                       src={item.product.images[0]}
                       alt={item.product.name}
@@ -136,7 +136,7 @@ export default function CartPage() {
             </div>
 
             {/* Right Column: Summary Panel */}
-            <aside className="lg:col-span-4 bg-surface-container-low p-8 border border-outline-variant/30 select-none space-y-6 mt-12 lg:mt-0">
+            <aside className="lg:col-span-4 bg-surface-container-low p-8 border border-outline-variant/30 rounded-lg select-none space-y-6 mt-12 lg:mt-0">
               <h3 className="font-label-caps text-label-caps text-primary pb-2 border-b border-outline-variant/30">
                 ORDER SUMMARY
               </h3>

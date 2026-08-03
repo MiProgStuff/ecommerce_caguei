@@ -18,7 +18,7 @@ export function SettingsPage() {
       <div className="space-y-4 max-w-3xl">
         <div className="p-4 bg-[#18181B] border border-[#27272A] rounded-[4px] space-y-4">
           <div className="flex items-center gap-2 border-b border-[#27272A] pb-3">
-            <Globe className="w-4 h-4 text-[#3B82F6]" />
+            <Globe className="w-4 h-4 text-[#C23B3B]" />
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">
               API Server Gateway Configuration
             </h3>

@@ -15,5 +15,7 @@ export const authClient = createAuthClient({
       },
     },
   },
+  // NOTE: NEXT_PUBLIC_API_URL must be a real routable host — never
+  // "http://0.0.0.0:PORT", which silently breaks this client-side call.
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
 });

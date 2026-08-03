@@ -256,7 +256,7 @@ export default function ShopClient({ initialFilters }: ShopClientProps) {
                   <button
                     key={c.name}
                     onClick={() => setSelectedColor(isActive ? null : c.name)}
-                    className={`w-6 h-6 border cursor-pointer transition-all ${
+                    className={`w-6 h-6 rounded-full border cursor-pointer transition-all ${
                       c.name === 'White' ? 'border-outline-variant/60' : 'border-transparent'
                     } ${
                       isActive ? 'ring-1 ring-primary ring-offset-2 scale-90' : 'hover:scale-105'
@@ -420,7 +420,7 @@ export default function ShopClient({ initialFilters }: ShopClientProps) {
                       <button
                         key={c.name}
                         onClick={() => setSelectedColor(isActive ? null : c.name)}
-                        className={`w-5 h-5 border cursor-pointer ${
+                        className={`w-5 h-5 rounded-full border cursor-pointer ${
                           c.name === 'White' ? 'border-outline-variant/60' : 'border-transparent'
                         } ${isActive ? 'ring-1 ring-primary ring-offset-2' : ''}`}
                         style={{ backgroundColor: c.value }}

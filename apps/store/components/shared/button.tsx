@@ -12,10 +12,10 @@ export default function Button({
   className = '',
   ...props
 }: ButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center font-label-caps text-label-caps py-4 px-8 border transition-all duration-300 select-none cursor-pointer';
-  
+  const baseStyles = 'inline-flex items-center justify-center font-label-caps text-label-caps py-4 px-8 border transition-all duration-300 select-none cursor-pointer rounded-md';
+
   const variants = {
-    primary: 'bg-primary text-on-primary border-primary hover:bg-on-surface-variant hover:border-on-surface-variant',
+    primary: 'bg-primary text-on-primary border-primary hover:bg-on-primary-container hover:border-on-primary-container',
     secondary: 'border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary',
     outline: 'border-primary text-primary hover:bg-primary hover:text-on-primary',
   };

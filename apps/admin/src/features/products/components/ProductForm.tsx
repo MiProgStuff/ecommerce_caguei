@@ -126,6 +126,7 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
       const formData = new FormData();
       formData.append('image', file);
 
+      // NEXT_PUBLIC_API_URL must be a real routable host — never "http://0.0.0.0:PORT".
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
       const response = await fetch(`${apiUrl}/api/upload`, {
         method: 'POST',
@@ -172,7 +173,7 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
               type="text"
               {...register('name')}
               placeholder="e.g. Sculptural Blazer 01"
-              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#3B82F6] transition-colors"
+              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
             />
             {errors.name && <span className="text-rose-400 text-[10px]">{errors.name.message}</span>}
           </div>
@@ -183,7 +184,7 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
               type="text"
               {...register('slug')}
               placeholder="e.g. sculptural-blazer-01"
-              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#3B82F6] transition-colors"
+              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
             />
             {errors.slug && <span className="text-rose-400 text-[10px]">{errors.slug.message}</span>}
           </div>
@@ -192,7 +193,7 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
             <label className="block text-[#A1A1AA] uppercase text-[10px]">Category</label>
             <select
               {...register('category')}
-              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#3B82F6] transition-colors"
+              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
             >
               <option value="">Select Category</option>
               <option value="Outerwear">Outerwear</option>
@@ -212,7 +213,7 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
               step="0.01"
               {...register('price', { valueAsNumber: true })}
               placeholder="0.00"
-              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#3B82F6] transition-colors"
+              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
             />
             {errors.price && <span className="text-rose-400 text-[10px]">{errors.price.message}</span>}
           </div>
@@ -223,7 +224,7 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
               type="number"
               {...register('stock', { valueAsNumber: true })}
               placeholder="0"
-              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#3B82F6] transition-colors"
+              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
             />
             {errors.stock && <span className="text-rose-400 text-[10px]">{errors.stock.message}</span>}
           </div>
@@ -235,7 +236,7 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
             {...register('description')}
             rows={4}
             placeholder="Detailed description of the garment..."
-            className="w-full p-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#3B82F6] transition-colors"
+            className="w-full p-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
           />
           {errors.description && (
             <span className="text-rose-400 text-[10px]">{errors.description.message}</span>
@@ -255,7 +256,7 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
               type="text"
               {...register('color')}
               placeholder="e.g. Obsidian Black"
-              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#3B82F6] transition-colors"
+              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
             />
             {errors.color && <span className="text-rose-400 text-[10px]">{errors.color.message}</span>}
           </div>
@@ -266,7 +267,7 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
               type="text"
               {...register('material')}
               placeholder="e.g. 420gsm Virgin Japanese Wool"
-              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#3B82F6] transition-colors"
+              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
             />
             {errors.material && (
               <span className="text-rose-400 text-[10px]">{errors.material.message}</span>
@@ -351,7 +352,7 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
                   placeholder="https://images.unsplash.com/photo-..."
                   value={img}
                   onChange={(e) => handleImageChange(index, e.target.value)}
-                  className="flex-1 h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#3B82F6]"
+                  className="flex-1 h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B]"
                 />
                 <button
                   type="button"
@@ -387,7 +388,7 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
                   placeholder="e.g. Crafted in Portugal"
                   value={detail}
                   onChange={(e) => handleDetailChange(index, e.target.value)}
-                  className="flex-1 h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#3B82F6]"
+                  className="flex-1 h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B]"
                 />
                 <button
                   type="button"
