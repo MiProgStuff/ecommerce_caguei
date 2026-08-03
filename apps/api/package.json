@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "dotenv -e ../../.env -- nodemon --watch src --watch lib -e ts --exec tsx src/server.ts",
-    "build": "tsc",
-    "start": "dotenv -e ../../.env -- node dist/server.js"
+    "build": "echo 'No build step — apps/api runs directly from source via tsx (see start script). better-auth/node is ESM-only, which makes a plain tsc build fail; tsx handles the interop at runtime instead.'",
+    "start": "dotenv -e ../../.env -- tsx src/server.ts"
   },
   "dependencies": {
     "@caguei/db": "workspace:*",

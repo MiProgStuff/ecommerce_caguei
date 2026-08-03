@@ -17,7 +17,9 @@ RUN pnpm install --frozen-lockfile
 COPY --from=builder /app/out/full/ .
 COPY turbo.json turbo.json
 RUN pnpm --filter @caguei/db exec prisma generate
-RUN pnpm run build --filter=api
+# No tsc build step: apps/api runs from source via tsx at container start
+# (see apps/api/package.json "start") — better-auth/node is ESM-only and
+# fails a plain CommonJS tsc build, so we don't try to pre-compile it.
 
 FROM base AS runner
 WORKDIR /app
