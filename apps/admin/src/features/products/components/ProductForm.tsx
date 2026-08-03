@@ -145,10 +145,14 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
         const emptyIndex = updatedImages.indexOf('');
         if (emptyIndex !== -1) {
           updatedImages[emptyIndex] = result.url;
-          setImages(updatedImages);
+        } else if (updatedImages.length === 1) {
+          // Single-image product: a new upload is almost always meant to
+          // replace the existing photo, not sit alongside it as a 2nd item.
+          updatedImages[0] = result.url;
         } else {
-          setImages([...images, result.url]);
+          updatedImages.push(result.url);
         }
+        setImages(updatedImages);
       }
     } catch (err: any) {
       console.error(err);

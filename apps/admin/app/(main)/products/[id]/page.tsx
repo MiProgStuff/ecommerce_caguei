@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
 import { fetcher } from '@/shared/lib/api-client';
 import { ProductForm } from '@/features/products/components/ProductForm';
@@ -12,6 +12,7 @@ import Link from 'next/link';
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
+  const queryClient = useQueryClient();
   const id = params.id as string;
 
   const { data: product, isLoading: isFetching } = useQuery<any>({
@@ -27,6 +28,8 @@ export default function EditProductPage() {
         body: JSON.stringify(data),
       }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-product', id] });
       router.push('/products');
       router.refresh();
     },
