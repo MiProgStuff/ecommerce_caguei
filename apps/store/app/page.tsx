@@ -232,7 +232,7 @@ export default function Home() {
       <section className="pb-section-gap px-6 md:px-margin-desktop max-w-[1440px] mx-auto">
         <div className="flex flex-col items-center mb-12">
           <span className="font-label-caps text-label-caps text-on-surface-variant mb-2">FOLLOW THE DIARY</span>
-          <h2 className="font-headline-md text-headline-md text-primary">@CAGUEI_OFFICIAL</h2>
+          <h2 className="font-headline-md text-headline-md text-primary">@CAGUEISTUDIO</h2>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[

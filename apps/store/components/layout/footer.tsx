@@ -31,7 +31,7 @@ export default function Footer() {
             Streetwear vintage/collegiate feito para durar — bordô, verde-oliva e cru, sem meias tintas.
           </p>
           <div className="flex space-x-6 font-label-caps text-[10px] text-on-surface-variant">
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Instagram</a>
+            <a href="https://instagram.com/cagueistudio" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Instagram</a>
             <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Pinterest</a>
             <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">TikTok</a>
           </div>
