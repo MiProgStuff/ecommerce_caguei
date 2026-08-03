@@ -31,10 +31,15 @@ export const auth = betterAuth({
       },
     }),
   ],
+  // Must match apps/api/lib/auth.ts's cookiePrefix — this instance isn't
+  // mounted over HTTP, it's only used server-side (app/(main)/layout.tsx) to
+  // read the session cookie the central store-auth instance issued.
+  advanced: {
+    cookiePrefix: 'store-auth',
+  },
   trustedOrigins: [
     'http://localhost:3000',
     'https://cagueistudio.com', // production store domain (prepared, not deployed yet)
-    'https://*.cagueistudio.com',
   ],
   // NOTE: NEXT_PUBLIC_STORE_URL must be a real routable host — never
   // "http://0.0.0.0:PORT", which silently breaks session validation.

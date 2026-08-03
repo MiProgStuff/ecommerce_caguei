@@ -27,7 +27,7 @@ export const auth = betterAuth({
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
         console.log(`\n========================================`);
-        console.log(`[CENTRAL API DEV AUTH LOGGER]`);
+        console.log(`[STORE AUTH DEV LOGGER]`);
         console.log(`Type: ${type.toUpperCase()}`);
         console.log(`To: ${email}`);
         console.log(`OTP Code: ${otp}`);
@@ -35,14 +35,16 @@ export const auth = betterAuth({
       },
     }),
   ],
-  // Define trusted origins for both frontend applications
+  // This is the STORE customer auth instance — keep its cookie name distinct
+  // from the admin instance (auth-admin.ts) so a session in one app never
+  // reads as a session in the other. See §5 of the root CLAUDE.md.
+  advanced: {
+    cookiePrefix: 'store-auth',
+  },
   trustedOrigins: [
     'http://localhost:3000', // store app default port
-    'http://localhost:3001', // admin app default port
     'http://192.168.1.100:3000', // dev: browser on another LAN machine via SSH — update if this box's IP changes
-    'http://192.168.1.100:3001',
     'https://cagueistudio.com', // production store domain (prepared, not deployed yet)
-    'https://*.cagueistudio.com', // any production subdomain (admin., api., etc.)
   ],
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:4000',
 });

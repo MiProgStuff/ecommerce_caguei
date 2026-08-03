@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from '../lib/auth';
+import { adminAuth } from '../lib/auth-admin';
 
 import webhooksRoutes from './modules/webhooks/webhooks.routes';
 import usersRoutes from './modules/users/users.routes';
@@ -62,7 +63,9 @@ app.use('/api/webhooks', webhooksRoutes);
 app.use(express.json());
 
 // ─── 3. Auth (BetterAuth Node Handler) ───────────────────────────────────────
+// Two separate instances/cookies — store and admin sessions must never mix.
 app.all('/api/auth/*', toNodeHandler(auth));
+app.all('/api/admin-auth/*', toNodeHandler(adminAuth));
 
 // ─── 4. Domain Modules ───────────────────────────────────────────────────────
 app.use('/api/users', usersRoutes);

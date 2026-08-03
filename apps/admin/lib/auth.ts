@@ -22,11 +22,15 @@ export const auth = betterAuth({
       },
     }),
   ],
+  // Must match apps/api/lib/auth-admin.ts's cookiePrefix — this instance
+  // isn't mounted over HTTP, it's only used server-side (app/(main)/layout.tsx)
+  // to read the session cookie the central admin-auth instance issued.
+  advanced: {
+    cookiePrefix: 'admin-auth',
+  },
   trustedOrigins: [
-    'http://localhost:3000',
     'http://localhost:3001',
-    'https://cagueistudio.com', // production store domain (prepared, not deployed yet)
-    'https://*.cagueistudio.com',
+    'https://admin.cagueistudio.com',
   ],
   // NOTE: NEXT_PUBLIC_ADMIN_URL must be a real routable host — never
   // "http://0.0.0.0:PORT", which silently breaks session validation.
