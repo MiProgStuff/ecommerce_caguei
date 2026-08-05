@@ -1,5 +1,12 @@
 import { prisma } from '@caguei/db';
 import { ProductInput } from '@caguei/validations';
+import { resolveProductPricing } from '../../lib/pricing';
+
+// Public-facing product read: overlays the automatic discount engine's
+// current tier on top of the raw stored row (a no-op when the engine is off).
+function withResolvedPricing<T extends Record<string, any>>(product: T) {
+  return { ...product, ...resolveProductPricing(product as any) };
+}
 
 export async function getProductsService(options?: {
   category?: string;
@@ -34,7 +41,7 @@ export async function getProductsService(options?: {
   ]);
 
   return {
-    products,
+    products: products.map(withResolvedPricing),
     total,
     page,
     totalPages: Math.ceil(total / limit),
@@ -42,11 +49,15 @@ export async function getProductsService(options?: {
 }
 
 export async function getProductBySlugService(slug: string) {
-  return await prisma.product.findUnique({
+  const product = await prisma.product.findUnique({
     where: { slug },
   });
+  return product ? withResolvedPricing(product) : product;
 }
 
+// Raw fetch, deliberately WITHOUT the pricing overlay — this backs the admin
+// edit form, which must show the actual stored manual fields, not whatever
+// the auto-discount engine currently computes.
 export async function getProductByIdService(id: string) {
   return await prisma.product.findUnique({
     where: { id },
@@ -77,6 +88,8 @@ export async function createProductService(data: ProductInput) {
       promoPrice: data.promoPrice,
       discountLabel: data.discountLabel,
       isPromoActive: data.isPromoActive,
+      autoDiscountEnabled: data.autoDiscountEnabled,
+      cycleSalesCount: data.cycleSalesCount,
     },
   });
 }

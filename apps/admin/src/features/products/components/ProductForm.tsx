@@ -41,6 +41,8 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
       promoPrice: initialData?.promoPrice,
       discountLabel: initialData?.discountLabel || '',
       isPromoActive: initialData?.isPromoActive || false,
+      autoDiscountEnabled: initialData?.autoDiscountEnabled || false,
+      cycleSalesCount: initialData?.cycleSalesCount || 0,
     },
   });
 
@@ -82,6 +84,7 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
   }, [costPrice, setValue]);
 
   const discountLabelPresets = ['-10%', '-20%', '-30%', '-40%', '-50%', 'Liquidação'];
+  const autoDiscountEnabled = watch('autoDiscountEnabled');
 
   const allSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'O/S'];
 
@@ -454,80 +457,113 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
           4. Pricing &amp; Promotions
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
-          <div className="space-y-1">
-            <label className="block text-[#A1A1AA] uppercase text-[10px]">Market / Cost Price (EUR)</label>
-            <input
-              type="number"
-              step="0.01"
-              {...register('costPrice', { valueAsNumber: true })}
-              placeholder="e.g. 14.92"
-              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
-            />
-            {errors.costPrice && <span className="text-rose-400 text-[10px]">{errors.costPrice.message}</span>}
-          </div>
-
-          <div className="space-y-1">
-            <label className="block text-[#A1A1AA] uppercase text-[10px]">Original / List Price (EUR)</label>
-            <input
-              type="number"
-              step="0.01"
-              {...register('originalPrice', {
-                valueAsNumber: true,
-                onChange: () => {
-                  originalPriceTouched.current = true;
-                },
-              })}
-              placeholder="e.g. 150.00"
-              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
-            />
-            {errors.originalPrice && (
-              <span className="text-rose-400 text-[10px]">{errors.originalPrice.message}</span>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <label className="block text-[#A1A1AA] uppercase text-[10px]">Current Promo Price (EUR)</label>
-            <input
-              type="number"
-              step="0.01"
-              {...register('promoPrice', { valueAsNumber: true })}
-              placeholder="e.g. 105.00"
-              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
-            />
-            {errors.promoPrice && <span className="text-rose-400 text-[10px]">{errors.promoPrice.message}</span>}
-          </div>
-        </div>
-
-        <div className="space-y-2 font-mono text-xs">
-          <label className="block text-[#A1A1AA] uppercase text-[10px]">Discount Label</label>
+        <div className="space-y-1 font-mono text-xs max-w-xs">
+          <label className="block text-[#A1A1AA] uppercase text-[10px]">Market / Cost Price (EUR)</label>
           <input
-            type="text"
-            {...register('discountLabel')}
-            placeholder="e.g. -30% or Liquidação"
+            type="number"
+            step="0.01"
+            {...register('costPrice', { valueAsNumber: true })}
+            placeholder="e.g. 14.92"
             className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
           />
-          <div className="flex flex-wrap gap-2">
-            {discountLabelPresets.map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => setValue('discountLabel', preset, { shouldValidate: true })}
-                className="px-2.5 py-1 bg-[#141313] border border-[#27272A] text-[#A1A1AA] hover:text-white hover:border-[#C23B3B] text-[10px] uppercase transition-colors"
-              >
-                {preset}
-              </button>
-            ))}
-          </div>
-          {errors.discountLabel && (
-            <span className="text-rose-400 text-[10px]">{errors.discountLabel.message}</span>
-          )}
+          {errors.costPrice && <span className="text-rose-400 text-[10px]">{errors.costPrice.message}</span>}
         </div>
 
-        <label className="flex items-center gap-2 font-mono text-xs text-[#A1A1AA] uppercase cursor-pointer w-fit">
-          <input type="checkbox" {...register('isPromoActive')} className="w-4 h-4 accent-[#C23B3B]" />
-          Promoção Ativa — show the discount on the storefront
+        <label className="flex items-start gap-2 font-mono text-xs text-[#A1A1AA] uppercase cursor-pointer w-fit p-3 bg-[#141313] border border-[#27272A]">
+          <input type="checkbox" {...register('autoDiscountEnabled')} className="w-4 h-4 mt-0.5 accent-[#C23B3B]" />
+          <span>
+            Automatic Discount Engine
+            <span className="block normal-case font-sans text-[11px] text-[#71717A] mt-1 max-w-md">
+              Price starts at 10× cost, sells the 1st unit at that anchor price, then steps
+              down automatically through fixed tiers (-30%, -45%, -60%, -80% "Liquidação")
+              as units sell — driven by Market/Cost Price above and confirmed sales. Turn
+              off to go back to the manual pricing below.
+            </span>
+          </span>
         </label>
+
+        {autoDiscountEnabled ? (
+          <div className="space-y-1 font-mono text-xs max-w-xs">
+            <label className="block text-[#A1A1AA] uppercase text-[10px]">Sales This Cycle</label>
+            <input
+              type="number"
+              {...register('cycleSalesCount', { valueAsNumber: true })}
+              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
+            />
+            <p className="text-[10px] text-[#71717A] normal-case">
+              Advances automatically on each confirmed sale. Set to 0 and save to restart the
+              cycle at the anchor price (e.g. after restocking at a new cost).
+            </p>
+            {errors.cycleSalesCount && (
+              <span className="text-rose-400 text-[10px]">{errors.cycleSalesCount.message}</span>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+              <div className="space-y-1">
+                <label className="block text-[#A1A1AA] uppercase text-[10px]">Original / List Price (EUR)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  {...register('originalPrice', {
+                    valueAsNumber: true,
+                    onChange: () => {
+                      originalPriceTouched.current = true;
+                    },
+                  })}
+                  placeholder="e.g. 150.00"
+                  className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
+                />
+                {errors.originalPrice && (
+                  <span className="text-rose-400 text-[10px]">{errors.originalPrice.message}</span>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[#A1A1AA] uppercase text-[10px]">Current Promo Price (EUR)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  {...register('promoPrice', { valueAsNumber: true })}
+                  placeholder="e.g. 105.00"
+                  className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
+                />
+                {errors.promoPrice && <span className="text-rose-400 text-[10px]">{errors.promoPrice.message}</span>}
+              </div>
+            </div>
+
+            <div className="space-y-2 font-mono text-xs">
+              <label className="block text-[#A1A1AA] uppercase text-[10px]">Discount Label</label>
+              <input
+                type="text"
+                {...register('discountLabel')}
+                placeholder="e.g. -30% or Liquidação"
+                className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
+              />
+              <div className="flex flex-wrap gap-2">
+                {discountLabelPresets.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setValue('discountLabel', preset, { shouldValidate: true })}
+                    className="px-2.5 py-1 bg-[#141313] border border-[#27272A] text-[#A1A1AA] hover:text-white hover:border-[#C23B3B] text-[10px] uppercase transition-colors"
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+              {errors.discountLabel && (
+                <span className="text-rose-400 text-[10px]">{errors.discountLabel.message}</span>
+              )}
+            </div>
+
+            <label className="flex items-center gap-2 font-mono text-xs text-[#A1A1AA] uppercase cursor-pointer w-fit">
+              <input type="checkbox" {...register('isPromoActive')} className="w-4 h-4 accent-[#C23B3B]" />
+              Promoção Ativa — show the discount on the storefront
+            </label>
+          </>
+        )}
       </div>
 
       <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#27272A]">

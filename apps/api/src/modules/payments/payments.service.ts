@@ -1,5 +1,6 @@
 import { prisma } from '@caguei/db';
 import { stripe } from '../../lib/stripe';
+import { resolveProductPricing } from '../../lib/pricing';
 
 export interface CreatePaymentIntentItemDTO {
   productId: string;
@@ -29,10 +30,13 @@ export async function createPaymentIntentService(
     const product = products.find((p) => p.id === item.productId);
     if (!product) throw new Error(`Product ${item.productId} not found`);
     const qty = Number(item.quantity) || 1;
-    // Always charge the active promo price, never a client-supplied value —
-    // this is the server-authoritative total the PaymentIntent is created from.
+    // Always charge the current price — manual promo or, when the automatic
+    // discount engine is on for this product, the current tier price — never
+    // a client-supplied value. This is the server-authoritative total the
+    // PaymentIntent is created from.
+    const pricing = resolveProductPricing(product);
     const effectivePrice =
-      product.isPromoActive && product.promoPrice != null ? product.promoPrice : product.price;
+      pricing.isPromoActive && pricing.promoPrice != null ? pricing.promoPrice : pricing.price;
     serverTotal += effectivePrice * qty;
     return { productId: item.productId, quantity: qty, size: item.size, price: effectivePrice };
   });

@@ -178,6 +178,11 @@ model Product {
   promoPrice    Float?   // Effective sale price while a promo is active
   discountLabel String?  // Badge text, e.g. "-30%", "Liquidação"
   isPromoActive Boolean  @default(false)
+  // Automatic sequential discount engine — see apps/api/src/lib/pricing.ts.
+  // When on, these two fields (plus costPrice) drive pricing and the manual
+  // fields above are ignored for display/checkout purposes.
+  autoDiscountEnabled Boolean @default(false)
+  cycleSalesCount     Int     @default(0)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   cartItems   CartItem[]

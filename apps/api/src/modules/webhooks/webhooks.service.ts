@@ -31,7 +31,10 @@ export async function processStripeWebhookService(rawBody: any, signature: strin
     try {
       await prisma.$transaction(async (tx: any) => {
         // Idempotency: only update if still PENDING
-        const order = await tx.order.findUnique({ where: { id: orderId } });
+        const order = await tx.order.findUnique({
+          where: { id: orderId },
+          include: { orderItems: true },
+        });
 
         if (!order) {
           console.error(`Order ${orderId} not found for PaymentIntent ${paymentIntent.id}`);
@@ -54,6 +57,25 @@ export async function processStripeWebhookService(rawBody: any, signature: strin
 
         // Clear the user's DB cart
         await tx.cartItem.deleteMany({ where: { userId: order.userId } });
+
+        // Advance the automatic discount engine: count this sale against
+        // each product's cycle, but only for products that have the engine
+        // on — enabling it later always starts fresh at the anchor price.
+        const productIds = order.orderItems.map((item: any) => item.productId);
+        const products = await tx.product.findMany({
+          where: { id: { in: productIds }, autoDiscountEnabled: true },
+          select: { id: true },
+        });
+        const autoDiscountProductIds = new Set(products.map((p: any) => p.id));
+
+        for (const item of order.orderItems) {
+          if (autoDiscountProductIds.has(item.productId)) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { cycleSalesCount: { increment: item.quantity } },
+            });
+          }
+        }
       });
 
       console.log(`[Stripe Webhook] Order ${orderId} marked as PAID (pi: ${paymentIntent.id})`);

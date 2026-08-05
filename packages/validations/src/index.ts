@@ -23,15 +23,33 @@ const productObjectSchema = z.object({
   promoPrice: z.number().positive('Promo price must be greater than 0').optional(),
   discountLabel: z.string().optional(),
   isPromoActive: z.boolean().default(false),
+  // Automatic sequential discount engine (mutually exclusive with the manual
+  // fields above while it's on — see apps/api/src/lib/pricing.ts)
+  autoDiscountEnabled: z.boolean().default(false),
+  cycleSalesCount: z.number().int().nonnegative('Sales count cannot be negative').default(0),
 });
 
-// Only enforced when isPromoActive is explicitly true in the payload — on
-// partial updates that don't touch promo fields, this check is skipped since
-// there's no DB read here to compare against the persisted state.
+// Only enforced when the relevant toggle is explicitly true in the payload —
+// on partial updates that don't touch these fields, the checks are skipped
+// since there's no DB read here to compare against the persisted state.
 function promoPricingRefinement(
-  data: { isPromoActive?: boolean; originalPrice?: number; promoPrice?: number },
+  data: {
+    isPromoActive?: boolean;
+    originalPrice?: number;
+    promoPrice?: number;
+    autoDiscountEnabled?: boolean;
+    costPrice?: number;
+  },
   ctx: z.RefinementCtx
 ) {
+  if (data.autoDiscountEnabled && !data.costPrice) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['costPrice'],
+      message: 'Cost price is required while the automatic discount engine is active',
+    });
+  }
+
   if (!data.isPromoActive) return;
 
   if (data.originalPrice === undefined) {
