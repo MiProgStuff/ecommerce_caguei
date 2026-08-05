@@ -21,6 +21,10 @@ interface Product {
   sizes: string[];
   stock: number;
   createdAt: string;
+  originalPrice?: number | null;
+  promoPrice?: number | null;
+  discountLabel?: string | null;
+  isPromoActive?: boolean;
 }
 
 export function ProductsPage() {
@@ -129,11 +133,28 @@ export function ProductsPage() {
     },
     {
       header: 'PRICE',
-      cell: (item) => (
-        <span className="font-mono text-xs font-bold text-white">
-          €{Number(item.price).toFixed(2)}
-        </span>
-      ),
+      cell: (item) =>
+        item.isPromoActive && item.promoPrice != null && item.originalPrice != null ? (
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-xs font-bold text-emerald-400">
+                €{Number(item.promoPrice).toFixed(2)}
+              </span>
+              {item.discountLabel && (
+                <span className="px-1 py-0.5 bg-[#C23B3B] text-white text-[9px] font-bold uppercase rounded-[2px]">
+                  {item.discountLabel}
+                </span>
+              )}
+            </div>
+            <span className="font-mono text-[10px] text-[#71717A] line-through">
+              €{Number(item.originalPrice).toFixed(2)}
+            </span>
+          </div>
+        ) : (
+          <span className="font-mono text-xs font-bold text-white">
+            €{Number(item.price).toFixed(2)}
+          </span>
+        ),
     },
     {
       header: 'ACTIONS',

@@ -29,8 +29,12 @@ export async function createPaymentIntentService(
     const product = products.find((p) => p.id === item.productId);
     if (!product) throw new Error(`Product ${item.productId} not found`);
     const qty = Number(item.quantity) || 1;
-    serverTotal += product.price * qty;
-    return { productId: item.productId, quantity: qty, size: item.size, price: product.price };
+    // Always charge the active promo price, never a client-supplied value —
+    // this is the server-authoritative total the PaymentIntent is created from.
+    const effectivePrice =
+      product.isPromoActive && product.promoPrice != null ? product.promoPrice : product.price;
+    serverTotal += effectivePrice * qty;
+    return { productId: item.productId, quantity: qty, size: item.size, price: effectivePrice };
   });
 
   const serverShipping = serverTotal >= 500 ? 0 : 25;

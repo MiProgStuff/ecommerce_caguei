@@ -11,6 +11,7 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import { useStore } from '../../../lib/context/store-context';
+import { getEffectivePrice } from '../../../lib/products';
 import Input from '../../../components/shared/input';
 import Button from '../../../components/shared/button';
 import {
@@ -99,7 +100,7 @@ export default function CheckoutPage() {
 
   // ── Calculations ──────────────────────────────────────────────────────────
   const subtotal = cart.reduce(
-    (sum, item) => sum + (item?.product?.price || 0) * (item?.quantity || 0),
+    (sum, item) => sum + (item?.product ? getEffectivePrice(item.product) : 0) * (item?.quantity || 0),
     0
   );
   const currency = cart.length > 0 ? cart[0].product.currency : '$';
@@ -345,7 +346,7 @@ export default function CheckoutPage() {
         productId: item.product.id,
         quantity: item.quantity,
         size: item.selectedSize,
-        price: item.product.price,
+        price: getEffectivePrice(item.product),
       }));
 
       const result = await createPaymentIntent({
@@ -745,7 +746,7 @@ export default function CheckoutPage() {
                     </p>
                   </div>
                   <span className="text-primary font-bold text-xs mt-1">
-                    {currency}{(item.product.price * item.quantity).toFixed(2)}
+                    {currency}{(getEffectivePrice(item.product) * item.quantity).toFixed(2)}
                   </span>
                 </div>
               </div>

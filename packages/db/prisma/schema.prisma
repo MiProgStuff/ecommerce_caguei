@@ -172,6 +172,12 @@ model Product {
   shipping    String
   sizes       String[]
   stock       Int            @default(0)
+  // Promotional pricing — see CLAUDE.md / feature: promo pricing system.
+  costPrice     Float?   // "Market/Cost" price — internal reference, never shown to customers
+  originalPrice Float?   // "Original/List" price — struck-through comparison price
+  promoPrice    Float?   // Effective sale price while a promo is active
+  discountLabel String?  // Badge text, e.g. "-30%", "Liquidação"
+  isPromoActive Boolean  @default(false)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   cartItems   CartItem[]

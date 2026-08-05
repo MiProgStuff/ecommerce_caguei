@@ -72,6 +72,11 @@ export async function createProductService(data: ProductInput) {
       shipping: data.shipping,
       sizes: data.sizes,
       stock: data.stock,
+      costPrice: data.costPrice,
+      originalPrice: data.originalPrice,
+      promoPrice: data.promoPrice,
+      discountLabel: data.discountLabel,
+      isPromoActive: data.isPromoActive,
     },
   });
 }

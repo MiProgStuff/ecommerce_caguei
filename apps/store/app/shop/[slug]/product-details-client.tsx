@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Product } from '../../../lib/products';
+import { Product, getPromoDisplay } from '../../../lib/products';
 import { useStore } from '../../../lib/context/store-context';
 import ProductCard from '../../../components/product/product-card';
 import Button from '../../../components/shared/button';
@@ -22,6 +22,7 @@ export default function ProductDetailsClient({
   const [activeAccordion, setActiveAccordion] = useState<string | null>('details');
 
   const isFavorited = isInWishlist(product.id);
+  const promo = getPromoDisplay(product);
 
   const handleAddToCart = () => {
     addToCart(product, selectedSize);
@@ -76,9 +77,16 @@ export default function ProductDetailsClient({
         {/* Right: Sticky Product Info */}
         <aside className="col-span-12 md:col-span-4 h-fit md:sticky md:top-32 space-y-unit-lg mt-8 md:mt-0 select-none">
           <header className="space-y-unit-sm">
-            <p className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">
-              Core Collection
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">
+                Core Collection
+              </p>
+              {promo.active && promo.label && (
+                <span className="bg-primary text-on-primary font-nav-item text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wide">
+                  {promo.label}
+                </span>
+              )}
+            </div>
             <div className="flex justify-between items-start gap-4">
               <h1 className="font-headline-lg text-3xl md:text-5xl leading-none text-primary">
                 {product.name}
@@ -91,9 +99,20 @@ export default function ProductDetailsClient({
                 <Heart size={18} className={isFavorited ? 'fill-primary text-primary' : 'text-on-surface-variant'} />
               </button>
             </div>
-            <p className="font-body-lg text-body-lg text-primary mt-unit-sm">
-              {product.currency}{product.price.toFixed(2)}
-            </p>
+            {promo.active ? (
+              <p className="font-body-lg text-body-lg mt-unit-sm flex items-baseline gap-2">
+                <span className="text-on-surface-variant line-through text-base">
+                  {product.currency}{promo.original!.toFixed(2)}
+                </span>
+                <span className="text-primary font-bold text-xl">
+                  {product.currency}{promo.current.toFixed(2)}
+                </span>
+              </p>
+            ) : (
+              <p className="font-body-lg text-body-lg text-primary mt-unit-sm">
+                {product.currency}{product.price.toFixed(2)}
+              </p>
+            )}
           </header>
 
           <div className="space-y-unit-md border-t border-outline-variant/30 pt-unit-md">

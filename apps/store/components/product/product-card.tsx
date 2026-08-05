@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Heart } from 'lucide-react';
-import { Product } from '../../lib/products';
+import { Product, getPromoDisplay } from '../../lib/products';
 import { useStore } from '../../lib/context/store-context';
 
 interface ProductCardProps {
@@ -13,6 +13,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { toggleWishlist, isInWishlist } = useStore();
   const activeWishlist = isInWishlist(product.id);
+  const promo = getPromoDisplay(product);
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -29,6 +30,13 @@ export default function ProductCard({ product }: ProductCardProps) {
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
         />
+
+        {/* Discount Badge */}
+        {promo.active && promo.label && (
+          <span className="absolute top-4 left-4 z-10 bg-primary text-on-primary font-nav-item text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wide">
+            {promo.label}
+          </span>
+        )}
 
         {/* Wishlist Button Overlay */}
         <button
@@ -57,8 +65,21 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.color} / {product.material.split(' ')[0]}
           </p>
         </div>
-        <span className="font-nav-item text-nav-item text-primary whitespace-nowrap pt-1">
-          {product.currency}{product.price.toFixed(2)}
+        <span className="font-nav-item text-nav-item whitespace-nowrap pt-1 flex items-baseline gap-1.5">
+          {promo.active ? (
+            <>
+              <span className="text-on-surface-variant line-through text-[13px]">
+                {product.currency}{promo.original!.toFixed(2)}
+              </span>
+              <span className="text-primary font-bold">
+                {product.currency}{promo.current.toFixed(2)}
+              </span>
+            </>
+          ) : (
+            <span className="text-primary">
+              {product.currency}{product.price.toFixed(2)}
+            </span>
+          )}
         </span>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Search, Heart, User, ShoppingBag, Menu, X, Plus, Minus } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useStore } from '../../lib/context/store-context';
+import { getEffectivePrice } from '../../lib/products';
 
 export default function Header() {
   const pathname = usePathname();
@@ -34,7 +35,10 @@ export default function Header() {
   ];
 
   const totalItems = cart.reduce((sum, item) => sum + (item?.quantity || 0), 0);
-  const cartTotal = cart.reduce((sum, item) => sum + (item?.product?.price || 0) * (item?.quantity || 0), 0);
+  const cartTotal = cart.reduce(
+    (sum, item) => sum + (item?.product ? getEffectivePrice(item.product) : 0) * (item?.quantity || 0),
+    0
+  );
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,7 +227,7 @@ export default function Header() {
                               </Link>
                             </h4>
                             <span className="font-nav-item text-nav-item text-primary ml-2">
-                              {item.product.currency}{item.product.price.toFixed(2)}
+                              {item.product.currency}{getEffectivePrice(item.product).toFixed(2)}
                             </span>
                           </div>
                           <p className="font-label-caps text-[10px] text-on-surface-variant mt-1.5 uppercase">

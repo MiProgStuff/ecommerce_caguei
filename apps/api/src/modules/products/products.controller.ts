@@ -7,7 +7,7 @@ import {
   updateProductService,
   deleteProductService,
 } from './products.service';
-import { productSchema } from '@caguei/validations';
+import { productSchema, productUpdateSchema } from '@caguei/validations';
 
 export async function getProductsHandler(req: Request, res: Response) {
   try {
@@ -73,7 +73,12 @@ export async function createProductHandler(req: Request, res: Response) {
 export async function updateProductHandler(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const updated = await updateProductService(id, req.body);
+    const validation = productUpdateSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ error: 'Invalid input', details: validation.error.format() });
+    }
+
+    const updated = await updateProductService(id, validation.data);
     res.json(updated);
   } catch (error) {
     console.error('Error updating product:', error);

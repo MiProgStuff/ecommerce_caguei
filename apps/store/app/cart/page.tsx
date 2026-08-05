@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShoppingBag, ArrowRight, Trash2, Plus, Minus } from 'lucide-react';
 import { useStore } from '../../lib/context/store-context';
+import { getEffectivePrice } from '../../lib/products';
 import Button from '../../components/shared/button';
 
 export default function CartPage() {
@@ -12,7 +13,10 @@ export default function CartPage() {
   const { cart, updateCartQuantity, removeFromCart, clearCart } = useStore();
 
   const totalItems = cart.reduce((sum, item) => sum + (item?.quantity || 0), 0);
-  const subtotal = cart.reduce((sum, item) => sum + (item?.product?.price || 0) * (item?.quantity || 0), 0);
+  const subtotal = cart.reduce(
+    (sum, item) => sum + (item?.product ? getEffectivePrice(item.product) : 0) * (item?.quantity || 0),
+    0
+  );
   const currency = cart.length > 0 ? cart[0].product.currency : '$';
 
   // Free shipping above $500 or €500
@@ -81,7 +85,7 @@ export default function CartPage() {
                           </p>
                         </div>
                         <span className="font-headline-md text-lg text-primary">
-                          {currency}{(item.product.price * item.quantity).toFixed(2)}
+                          {currency}{(getEffectivePrice(item.product) * item.quantity).toFixed(2)}
                         </span>
                       </div>
                       <p className="font-body-md text-sm text-on-surface-variant max-w-md line-clamp-2">

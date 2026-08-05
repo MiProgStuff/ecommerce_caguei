@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { productSchema, ProductInput } from '@caguei/validations';
@@ -36,6 +36,11 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
       images: initialData?.images || [''],
       details: initialData?.details || [''],
       stock: initialData?.stock || 0,
+      costPrice: initialData?.costPrice,
+      originalPrice: initialData?.originalPrice,
+      promoPrice: initialData?.promoPrice,
+      discountLabel: initialData?.discountLabel || '',
+      isPromoActive: initialData?.isPromoActive || false,
     },
   });
 
@@ -63,6 +68,20 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
   useEffect(() => {
     setValue('details', details, { shouldValidate: true });
   }, [details, setValue]);
+
+  const costPrice = watch('costPrice');
+  const originalPriceTouched = useRef(!!initialData?.originalPrice);
+
+  // Auto-fill the list price as 10x the cost price, but stop overwriting it
+  // once the admin has edited it by hand.
+  useEffect(() => {
+    if (originalPriceTouched.current) return;
+    if (typeof costPrice === 'number' && !Number.isNaN(costPrice) && costPrice > 0) {
+      setValue('originalPrice', Math.round(costPrice * 10 * 100) / 100, { shouldValidate: true });
+    }
+  }, [costPrice, setValue]);
+
+  const discountLabelPresets = ['-10%', '-20%', '-30%', '-40%', '-50%', 'Liquidação'];
 
   const allSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'O/S'];
 
@@ -428,6 +447,87 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
             />
           </div>
         </div>
+      </div>
+
+      <div className="bg-[#18181B] border border-[#27272A] rounded-none p-6 space-y-6">
+        <h3 className="font-mono text-xs font-bold text-white uppercase tracking-wider border-b border-[#27272A] pb-3">
+          4. Pricing &amp; Promotions
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+          <div className="space-y-1">
+            <label className="block text-[#A1A1AA] uppercase text-[10px]">Market / Cost Price (EUR)</label>
+            <input
+              type="number"
+              step="0.01"
+              {...register('costPrice', { valueAsNumber: true })}
+              placeholder="e.g. 14.92"
+              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
+            />
+            {errors.costPrice && <span className="text-rose-400 text-[10px]">{errors.costPrice.message}</span>}
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-[#A1A1AA] uppercase text-[10px]">Original / List Price (EUR)</label>
+            <input
+              type="number"
+              step="0.01"
+              {...register('originalPrice', {
+                valueAsNumber: true,
+                onChange: () => {
+                  originalPriceTouched.current = true;
+                },
+              })}
+              placeholder="e.g. 150.00"
+              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
+            />
+            {errors.originalPrice && (
+              <span className="text-rose-400 text-[10px]">{errors.originalPrice.message}</span>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-[#A1A1AA] uppercase text-[10px]">Current Promo Price (EUR)</label>
+            <input
+              type="number"
+              step="0.01"
+              {...register('promoPrice', { valueAsNumber: true })}
+              placeholder="e.g. 105.00"
+              className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
+            />
+            {errors.promoPrice && <span className="text-rose-400 text-[10px]">{errors.promoPrice.message}</span>}
+          </div>
+        </div>
+
+        <div className="space-y-2 font-mono text-xs">
+          <label className="block text-[#A1A1AA] uppercase text-[10px]">Discount Label</label>
+          <input
+            type="text"
+            {...register('discountLabel')}
+            placeholder="e.g. -30% or Liquidação"
+            className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
+          />
+          <div className="flex flex-wrap gap-2">
+            {discountLabelPresets.map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => setValue('discountLabel', preset, { shouldValidate: true })}
+                className="px-2.5 py-1 bg-[#141313] border border-[#27272A] text-[#A1A1AA] hover:text-white hover:border-[#C23B3B] text-[10px] uppercase transition-colors"
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
+          {errors.discountLabel && (
+            <span className="text-rose-400 text-[10px]">{errors.discountLabel.message}</span>
+          )}
+        </div>
+
+        <label className="flex items-center gap-2 font-mono text-xs text-[#A1A1AA] uppercase cursor-pointer w-fit">
+          <input type="checkbox" {...register('isPromoActive')} className="w-4 h-4 accent-[#C23B3B]" />
+          Promoção Ativa — show the discount on the storefront
+        </label>
       </div>
 
       <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#27272A]">
