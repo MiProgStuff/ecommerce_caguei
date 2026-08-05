@@ -69,3 +69,10 @@ export async function fulfillOrderService(id: string, carrier: string, trackingC
     },
   });
 }
+
+export async function cancelOrderService(id: string) {
+  return await prisma.order.update({
+    where: { id },
+    data: { status: 'CANCELLED' },
+  });
+}

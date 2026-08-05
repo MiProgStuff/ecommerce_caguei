@@ -7,7 +7,7 @@ import { StatusBadge } from '@/shared/components/feedback/StatusBadge';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { fulfillmentSchema, FulfillmentInput } from '@caguei/validations';
-import { ArrowLeft, Loader2, PackageOpen, Truck, Clipboard, User, MapPin } from 'lucide-react';
+import { ArrowLeft, Loader2, PackageOpen, Truck, Clipboard, User, MapPin, Ban } from 'lucide-react';
 import Link from 'next/link';
 
 interface OrderDetailPageProps {
@@ -37,6 +37,23 @@ export function OrderDetailPage({ id }: OrderDetailPageProps) {
       alert(error.message || 'Failed to dispatch order.');
     },
   });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => fetcher(`/api/orders/${id}/cancel`, { method: 'POST' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-order', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+    },
+    onError: (error: any) => {
+      alert(error.message || 'Failed to cancel order.');
+    },
+  });
+
+  const handleCancelOrder = () => {
+    if (confirm('Cancel this order? This cannot be undone.')) {
+      cancelMutation.mutate();
+    }
+  };
 
   const {
     register,
@@ -78,6 +95,7 @@ export function OrderDetailPage({ id }: OrderDetailPageProps) {
 
   const isFulfilled = order.status === 'COMPLETED';
   const showFulfillmentForm = order.status === 'PAID' || order.status === 'PROCESSING';
+  const isCancellable = order.status === 'PENDING';
 
   return (
     <div className="space-y-6">
@@ -222,6 +240,33 @@ export function OrderDetailPage({ id }: OrderDetailPageProps) {
               </div>
             </div>
           </div>
+
+          {/* Cancel action — pending orders only (payment never confirmed) */}
+          {isCancellable && (
+            <div className="p-4 bg-[#18181B] border border-[#27272A] rounded-none space-y-3">
+              <div className="flex items-center gap-2 border-b border-[#27272A] pb-2 text-white">
+                <Ban className="w-4 h-4 text-rose-400" />
+                <h4 className="font-mono text-xs font-bold uppercase tracking-wider">
+                  Order Actions
+                </h4>
+              </div>
+              <p className="font-mono text-[10px] text-[#A1A1AA]">
+                Payment was never confirmed for this order. Cancel it to close it out.
+              </p>
+              <button
+                onClick={handleCancelOrder}
+                disabled={cancelMutation.isPending}
+                className="w-full h-9 bg-rose-950/40 text-rose-400 border border-rose-800/50 font-semibold uppercase text-xs rounded-none hover:bg-rose-950/70 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+              >
+                {cancelMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Ban className="w-4 h-4" />
+                )}
+                <span>Cancel Order</span>
+              </button>
+            </div>
+          )}
 
           {/* Fulfillment actions form */}
           {showFulfillmentForm && (

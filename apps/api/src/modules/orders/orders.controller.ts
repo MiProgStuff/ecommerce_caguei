@@ -4,6 +4,7 @@ import {
   getAllOrdersService,
   getOrderByIdService,
   fulfillOrderService,
+  cancelOrderService,
 } from './orders.service';
 import { fulfillmentSchema } from '@caguei/validations';
 
@@ -79,6 +80,33 @@ export async function fulfillOrderHandler(req: Request, res: Response) {
     res.json(updatedOrder);
   } catch (error) {
     console.error('Error fulfilling order:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+export async function cancelOrderHandler(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+
+    if (req.user?.role !== 'SUPER_ADMIN' && req.user?.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Forbidden: Admin access required' });
+    }
+
+    const order = await getOrderByIdService(id);
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Only PENDING orders (payment never confirmed) can be cancelled this
+    // way — anything PAID or beyond needs a refund flow, not a status flip.
+    if (order.status !== 'PENDING') {
+      return res.status(409).json({ error: 'Only pending orders can be cancelled' });
+    }
+
+    const updatedOrder = await cancelOrderService(id);
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error('Error cancelling order:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
