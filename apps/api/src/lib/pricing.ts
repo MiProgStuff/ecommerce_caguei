@@ -96,6 +96,13 @@ export function obterEstadoAtualProduto(
   return obterEstadoAtualProduto(precoMercado, 0);
 }
 
+// Same 10x rule the admin form derives client-side — kept authoritative here
+// too, so Original/List Price stays consistent for every product no matter
+// which client writes it (admin form, a script, a future UI).
+export function deriveOriginalPrice(costPrice: number): number {
+  return Math.round(costPrice * 10 * 100) / 100;
+}
+
 interface ProductPricingInput {
   price: number;
   costPrice: number | null;

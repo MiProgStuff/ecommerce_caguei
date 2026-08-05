@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { productSchema, ProductInput } from '@caguei/validations';
@@ -72,19 +72,61 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
   }, [details, setValue]);
 
   const costPrice = watch('costPrice');
-  const originalPriceTouched = useRef(!!initialData?.originalPrice);
+  const autoDiscountEnabled = watch('autoDiscountEnabled');
+  const originalPrice = watch('originalPrice');
 
-  // Auto-fill the list price as 10x the cost price, but stop overwriting it
-  // once the admin has edited it by hand.
+  // Original/List price is never hand-edited — it's always 10x the cost
+  // price, kept live in sync as soon as cost price changes.
   useEffect(() => {
-    if (originalPriceTouched.current) return;
     if (typeof costPrice === 'number' && !Number.isNaN(costPrice) && costPrice > 0) {
       setValue('originalPrice', Math.round(costPrice * 10 * 100) / 100, { shouldValidate: true });
+    } else {
+      setValue('originalPrice', undefined, { shouldValidate: true });
     }
   }, [costPrice, setValue]);
 
-  const discountLabelPresets = ['-10%', '-20%', '-30%', '-40%', '-50%', 'Liquidação'];
-  const autoDiscountEnabled = watch('autoDiscountEnabled');
+  // Discount % drives the promo price — it's a form-local helper, not a
+  // persisted field. Seed it from whatever ratio the stored originalPrice/
+  // promoPrice already imply, so editing an existing manual promo doesn't
+  // silently jump to a different discount on open.
+  const [discountPercent, setDiscountPercent] = useState<number>(() => {
+    const orig = initialData?.originalPrice;
+    const promo = initialData?.promoPrice;
+    if (orig && promo && orig > 0) {
+      return Math.round((1 - promo / orig) * 100);
+    }
+    return 30;
+  });
+
+  const discountLabelPresets: Array<{ label: string; percent: number }> = [
+    { label: '-10%', percent: 10 },
+    { label: '-20%', percent: 20 },
+    { label: '-30%', percent: 30 },
+    { label: '-40%', percent: 40 },
+    { label: '-50%', percent: 50 },
+    { label: 'Liquidação', percent: 80 },
+  ];
+
+  // Current Promo Price is never hand-edited — it's always Original/List
+  // Price minus Discount %, kept live as either input changes.
+  useEffect(() => {
+    if (
+      typeof originalPrice === 'number' &&
+      !Number.isNaN(originalPrice) &&
+      originalPrice > 0 &&
+      typeof discountPercent === 'number' &&
+      !Number.isNaN(discountPercent)
+    ) {
+      const clampedPercent = Math.min(Math.max(discountPercent, 0), 100);
+      setValue(
+        'promoPrice',
+        Math.round(originalPrice * (1 - clampedPercent / 100) * 100) / 100,
+        { shouldValidate: true }
+      );
+    } else {
+      setValue('promoPrice', undefined, { shouldValidate: true });
+    }
+  }, [originalPrice, discountPercent, setValue]);
 
   const allSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'O/S'];
 
@@ -487,7 +529,10 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
             <label className="block text-[#A1A1AA] uppercase text-[10px]">Sales This Cycle</label>
             <input
               type="number"
-              {...register('cycleSalesCount', { valueAsNumber: true })}
+              value={watch('cycleSalesCount') ?? 0}
+              onChange={(e) =>
+                setValue('cycleSalesCount', Number(e.target.value), { shouldValidate: true })
+              }
               className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
             />
             <p className="text-[10px] text-[#71717A] normal-case">
@@ -506,18 +551,30 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
                 <input
                   type="number"
                   step="0.01"
-                  {...register('originalPrice', {
-                    valueAsNumber: true,
-                    onChange: () => {
-                      originalPriceTouched.current = true;
-                    },
-                  })}
-                  placeholder="e.g. 150.00"
-                  className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
+                  readOnly
+                  {...register('originalPrice', { valueAsNumber: true })}
+                  placeholder="Set the Market/Cost Price above"
+                  className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-[#A1A1AA] cursor-not-allowed focus:outline-none"
                 />
+                <p className="text-[10px] text-[#71717A] normal-case">
+                  Always 10× the Market/Cost Price above — updates live, not editable.
+                </p>
                 {errors.originalPrice && (
                   <span className="text-rose-400 text-[10px]">{errors.originalPrice.message}</span>
                 )}
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[#A1A1AA] uppercase text-[10px]">Discount %</label>
+                <input
+                  type="number"
+                  step="1"
+                  min={0}
+                  max={100}
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(Number(e.target.value))}
+                  className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
+                />
               </div>
 
               <div className="space-y-1">
@@ -525,10 +582,14 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
                 <input
                   type="number"
                   step="0.01"
+                  readOnly
                   {...register('promoPrice', { valueAsNumber: true })}
-                  placeholder="e.g. 105.00"
-                  className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-white focus:outline-none focus:border-[#C23B3B] transition-colors"
+                  placeholder="Set the Discount % above"
+                  className="w-full h-9 px-3 bg-[#141313] border border-[#27272A] rounded-none text-[#A1A1AA] cursor-not-allowed focus:outline-none"
                 />
+                <p className="text-[10px] text-[#71717A] normal-case">
+                  Always Original/List Price minus Discount % — updates live, not editable.
+                </p>
                 {errors.promoPrice && <span className="text-rose-400 text-[10px]">{errors.promoPrice.message}</span>}
               </div>
             </div>
@@ -544,12 +605,15 @@ export function ProductForm({ initialData, onSubmit, isLoading = false }: Produc
               <div className="flex flex-wrap gap-2">
                 {discountLabelPresets.map((preset) => (
                   <button
-                    key={preset}
+                    key={preset.label}
                     type="button"
-                    onClick={() => setValue('discountLabel', preset, { shouldValidate: true })}
+                    onClick={() => {
+                      setValue('discountLabel', preset.label, { shouldValidate: true });
+                      setDiscountPercent(preset.percent);
+                    }}
                     className="px-2.5 py-1 bg-[#141313] border border-[#27272A] text-[#A1A1AA] hover:text-white hover:border-[#C23B3B] text-[10px] uppercase transition-colors"
                   >
-                    {preset}
+                    {preset.label}
                   </button>
                 ))}
               </div>

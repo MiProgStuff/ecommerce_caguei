@@ -1,6 +1,6 @@
 import { prisma } from '@caguei/db';
 import { ProductInput } from '@caguei/validations';
-import { resolveProductPricing } from '../../lib/pricing';
+import { resolveProductPricing, deriveOriginalPrice } from '../../lib/pricing';
 
 // Public-facing product read: overlays the automatic discount engine's
 // current tier on top of the raw stored row (a no-op when the engine is off).
@@ -84,7 +84,10 @@ export async function createProductService(data: ProductInput) {
       sizes: data.sizes,
       stock: data.stock,
       costPrice: data.costPrice,
-      originalPrice: data.originalPrice,
+      originalPrice:
+        typeof data.costPrice === 'number' && data.costPrice > 0
+          ? deriveOriginalPrice(data.costPrice)
+          : data.originalPrice,
       promoPrice: data.promoPrice,
       discountLabel: data.discountLabel,
       isPromoActive: data.isPromoActive,
@@ -94,10 +97,18 @@ export async function createProductService(data: ProductInput) {
   });
 }
 
+// Original/List Price is never trusted from the client when a cost price is
+// part of the payload — it's re-derived server-side as 10x cost, matching
+// the admin form's (also non-editable) behavior, so every product stays
+// consistent regardless of which client wrote it.
 export async function updateProductService(id: string, data: Partial<ProductInput>) {
+  const finalData = { ...data };
+  if (typeof data.costPrice === 'number' && data.costPrice > 0) {
+    finalData.originalPrice = deriveOriginalPrice(data.costPrice);
+  }
   return await prisma.product.update({
     where: { id },
-    data,
+    data: finalData,
   });
 }
 
