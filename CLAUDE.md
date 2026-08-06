@@ -127,6 +127,29 @@ atual do admin (ver §5). `docs/design-system.md` está atualizado e é a fonte
 de verdade da identidade visual. Não confies cegamente nos outros dois sem
 verificar contra o código.
 
+### 3.6 Sistema de preços/promoções — `originalPrice`/`promoPrice` são campos derivados, não editáveis
+Existem dois sistemas de desconto por produto, ambos resolvidos em
+`apps/api/src/lib/pricing.ts` (`resolveProductPricing()`), documentados em
+detalhe em `docs/api-reference.md` → Product Endpoints:
+1. **Manual** — admin define `originalPrice`/`promoPrice`/`discountLabel`/`isPromoActive`.
+2. **Motor automático sequencial** — `autoDiscountEnabled: true` + `costPrice`;
+   desce por 4 patamares fixos (-30/-45/-60/-80% "Liquidação") conforme
+   `cycleSalesCount` avança (incrementado pelo webhook do Stripe em vendas
+   pagas). Quando ligado, sobrepõe-se aos campos manuais em todas as leituras
+   públicas (`GET /api/products`, `GET /api/products/:slug`).
+
+No formulário do admin (`ProductForm.tsx`), `Original/List Price` e `Current
+Promo Price` já **não são campos de texto livre** — são sempre calculados ao
+vivo (`originalPrice = costPrice × 10`; `promoPrice = originalPrice × (1 −
+Discount% / 100)`, com `Discount%` como estado local do formulário, sem
+correspondência na BD). Isto já foi a causa de um bug real (dados
+inconsistentes por produto: um produto tinha `promoPrice` completamente
+errado por ter sido editado antes desta regra existir) — a BD já foi
+corrigida e o servidor agora também deriva `originalPrice` a partir de
+`costPrice` em todo `create`/`update`, independente do que o cliente enviar.
+**Não voltar a tornar estes campos editáveis manualmente** sem confirmar com
+o utilizador primeiro.
+
 ---
 
 ## 4. Identidade de marca

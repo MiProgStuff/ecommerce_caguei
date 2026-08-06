@@ -24,11 +24,15 @@ apps/api/src/
 ├── app.ts                         # Express setup, CORS, raw webhook route, JSON bodyparser, module routes
 ├── server.ts                      # Server startup entrypoint (listens on PORT)
 ├── lib/
-│   └── stripe.ts                  # Shared Stripe SDK singleton instance
+│   ├── stripe.ts                  # Shared Stripe SDK singleton instance
+│   └── pricing.ts                 # resolveProductPricing() — overlays manual promo or the
+│                                   # automatic sequential discount engine on top of a raw
+│                                   # Product row; deriveOriginalPrice() (10x cost) used by
+│                                   # products.service.ts on every create/update
 ├── middleware/
 │   └── auth.middleware.ts         # requireAuth middleware (validates session, attaches req.user / req.session)
 └── modules/
-    ├── users/                     # GET /api/users/check
+    ├── users/                     # GET /api/users/check, PATCH /api/users/:id/role
     │   ├── users.routes.ts
     │   ├── users.controller.ts
     │   └── users.service.ts
@@ -44,21 +48,24 @@ apps/api/src/
     │   ├── wishlist.routes.ts
     │   ├── wishlist.controller.ts
     │   └── wishlist.service.ts
-    ├── payments/                  # POST /api/payments/create-intent
+    ├── payments/                  # POST /api/payments/create-intent — always prices
+    │   │                          # via resolveProductPricing(), never the client total
     │   ├── payments.routes.ts
     │   ├── payments.controller.ts
     │   └── payments.service.ts
-    ├── products/                  # GET /api/products, GET /api/products/:slug
+    ├── products/                  # GET/POST /api/products, GET id/:id (raw) + :slug
+    │   │                          # (overlaid), PUT/DELETE /:id — see docs/api-reference.md
     │   ├── products.routes.ts
     │   ├── products.controller.ts
     │   └── products.service.ts
-    ├── orders/                    # GET /api/orders
+    ├── orders/                    # GET /api/orders, GET /:id, POST /:id/fulfill,
+    │   │                          # POST /:id/cancel (409 unless status is PENDING)
     │   ├── orders.routes.ts
     │   ├── orders.controller.ts
     │   └── orders.service.ts
-    └── webhooks/                  # POST /api/webhooks/stripe (raw body processing)
-        ├── webhooks.routes.ts
-        ├── webhooks.controller.ts
+    └── webhooks/                  # POST /api/webhooks/stripe (raw body processing) — also
+        ├── webhooks.routes.ts     # advances cycleSalesCount for auto-discount products on
+        ├── webhooks.controller.ts # payment_intent.succeeded
         └── webhooks.service.ts
 ```
 

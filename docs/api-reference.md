@@ -98,10 +98,33 @@ All cart endpoints require an authenticated session cookie.
 
 ---
 
+## Product Endpoints
+
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| `GET` | `/api/products` | Public | List products (`?category=`, `?search=`, `?page=`, `?limit=`) |
+| `GET` | `/api/products/id/:id` | Public | Fetch by ID — **raw** stored fields, no pricing overlay (admin edit form) |
+| `GET` | `/api/products/:slug` | Public | Fetch by slug — pricing overlay applied (storefront PDP) |
+| `POST` | `/api/products` | `products:CREATE` | Create a product |
+| `PUT` | `/api/products/:id` | `products:UPDATE` | Update a product (partial body) |
+| `DELETE` | `/api/products/:id` | `products:DELETE` | Delete a product |
+
+### Pricing fields & the two promo systems
+`Product` carries two independent, mutually-exclusive-in-effect pricing systems, both resolved through `apps/api/src/lib/pricing.ts`'s `resolveProductPricing()`:
+
+1. **Manual promo** — admin sets `originalPrice`, `promoPrice`, `discountLabel`, `isPromoActive` by hand.
+2. **Automatic sequential discount engine** — `autoDiscountEnabled: true` + `costPrice` set. Price steps down through 4 fixed tiers (-30/-45/-60/-80% "Liquidação") as `cycleSalesCount` advances (incremented by the Stripe webhook on paid orders); overflowing the last tier resets the cycle. When on, this **overrides** the manual fields in every public-facing read.
+
+`GET /api/products` and `GET /api/products/:slug` apply this overlay; `GET /api/products/id/:id` deliberately does not (it backs the admin edit form, which must show true stored values).
+
+**`originalPrice` is always server-derived** from `costPrice` (`= costPrice × 10`, rounded to cents) on both create and update, regardless of what the client sends — this happens in `products.service.ts`, independent of the admin form's own (also read-only) client-side mirror of the same rule. There's no persisted "discount %" field for the manual system; the admin form computes `promoPrice` client-side from a local Discount % helper and submits the resulting number directly.
+
+---
+
 ## Payment Endpoints (Stripe)
 
 ### Create a Payment Intent
-Creates a Stripe PaymentIntent server-side. The **amount is calculated server-side** by verifying actual product prices — the client-submitted total is never trusted.
+Creates a Stripe PaymentIntent server-side. The **amount is calculated server-side** by verifying actual product prices (via `resolveProductPricing`, so an active promo or the current auto-discount tier is what's charged) — the client-submitted total is never trusted.
 
 - **URL:** `POST /api/payments/create-intent`
 - **Auth:** Session cookie required
@@ -118,7 +141,11 @@ Creates a Stripe PaymentIntent server-side. The **amount is calculated server-si
     ]
   }
   ```
+  (`subtotal`/`shippingCost`/`estimatedTax`/`grandTotal`/`items[].price` are display-only — recomputed server-side and never trusted.)
 - **Response:** `{ "clientSecret": "pi_xxx_secret_xxx", "orderId": "order_uuid" }`
+
+### Shipping & tax calculation
+Flat, hardcoded rule, no carrier/weight/region logic: `shippingCost = subtotal >= 500 ? 0 : 25`, `estimatedTax = subtotal * 0.08`. Authoritative version lives in `payments.service.ts`; `apps/store/app/(main)/checkout/page.tsx` and `apps/store/app/cart/page.tsx` each duplicate it client-side purely for display — if they ever drift, the API's number is what actually gets charged.
 
 ---
 
@@ -138,13 +165,16 @@ Creates a Stripe PaymentIntent server-side. The **amount is calculated server-si
 
 ---
 
-## Orders Endpoints (Read-only)
+## Orders Endpoints
 
-Orders are **only created by the Stripe webhook**. The client can only read them.
+Orders are **only created by the Stripe webhook** — never by a direct client request.
 
-| Method | URL | Description |
-|--------|-----|-------------|
-| `GET` | `/api/orders` | Get all orders for the current user, with items and address |
+| Method | URL | Auth | Description |
+|--------|-----|------|-------------|
+| `GET` | `/api/orders` | Session | Get all orders for the current user, with items and address |
+| `GET` | `/api/orders/:id` | Session | Get a single order |
+| `POST` | `/api/orders/:id/fulfill` | `orders:UPDATE` | Attach carrier/tracking, mark shipped |
+| `POST` | `/api/orders/:id/cancel` | `orders:UPDATE` | Cancel an order — **409 if status isn't `PENDING`** |
 
 ---
 
